@@ -11,10 +11,6 @@ namespace LifxLan.LIFX
 {
     public class LightManager
     {
-        public static readonly TimeSpan COMMAND_DELAY = TimeSpan.FromMilliseconds(5);
-        public static readonly TimeSpan COMMAND_TIMEOUT = TimeSpan.FromSeconds(10);
-        public static readonly TimeSpan DISCOVERY_TIMEOUT = TimeSpan.FromSeconds(20);
-
         public LifxClient Client { get; private set; }
 
         public Dictionary<string, LightAndState> LightAndStates { get; }
@@ -22,25 +18,29 @@ namespace LifxLan.LIFX
 
         public DelayedTaskSender CommandHandler { get; }
 
-        public LightManager(int numLights)
+        public LightManager(int numLights, TimeSpan discoveryTimeout, TimeSpan commandDelay, TimeSpan commandTimeout)
         {
             LightAndStates = new Dictionary<string, LightAndState>();
-            CommandHandler = new DelayedTaskSender(COMMAND_DELAY, COMMAND_TIMEOUT);
+            CommandHandler = new DelayedTaskSender(commandDelay, commandTimeout);
 
-            if (numLights > 0 && !Initialize(numLights))
+            if (numLights > 0 && !Initialize(numLights, discoveryTimeout))
             {
                 throw new TimeoutException("Did not discover all lights within timeout!");
             }
         }
 
-        private bool Initialize(int numLightsExpected)
+        #region Initialization Functions
+        private bool Initialize(int numLightsExpected, TimeSpan discoveryTimeout)
         {
             Stopwatch sw = new Stopwatch();
             sw.Start();
 
             // Create the client
             Task<LifxClient> createTask = LifxClient.CreateAsync();
-            createTask.Wait(DISCOVERY_TIMEOUT);
+            if (!createTask.Wait(discoveryTimeout))
+            {
+                throw new TimeoutException($"Could not create {nameof(LifxClient)} within time limit!");
+            }
             Client = createTask.Result;
 
             // Discover all bulbs
@@ -62,7 +62,7 @@ namespace LifxLan.LIFX
                     Client.StopDeviceDiscovery();
                     break;
                 }
-            } while (sw.Elapsed < DISCOVERY_TIMEOUT);
+            } while (sw.Elapsed < discoveryTimeout);
 
             return allLightsDiscoverd;
         }
@@ -93,7 +93,7 @@ namespace LifxLan.LIFX
             Dictionary<string, Task<CommandResponse<LightStateResponse>>> statusCheckTasks = new Dictionary<string, Task<CommandResponse<LightStateResponse>>>();
             foreach (var kv in LightAndStates)
             {
-                statusCheckTasks.Add(kv.Key, CommandHandler.SendCommand(Client.GetLightStateAsync(kv.Value.Light)));
+                statusCheckTasks.Add(kv.Key, CommandHandler.SendCommandWithDelay(Client.GetLightStateAsync(kv.Value.Light)));
             }
 
             await Task.WhenAll(statusCheckTasks.Values);
@@ -105,18 +105,13 @@ namespace LifxLan.LIFX
             }
         }
 
-        public Task[] SetColor(ColorProperty color, double brightness, TimeSpan transition, params LightBulb[] lights)
-        {
-            return lights
-                .Select(l => Client.SetColorAsync(l, color.Hue, color.Saturation, ColorProperty.GetBrightness(brightness), color.Kelvin, transition))
-                .ToArray();
-        }
-
         public override string ToString()
         {
+            var orderedLightAndStates = LightAndStates.OrderBy(l => l.Key);
+
             StringBuilder builder = new StringBuilder();
             builder.AppendLine($"Current registered lights ({LightAndStates.Keys.Count})");
-            foreach (var light in LightAndStates)
+            foreach (var light in orderedLightAndStates)
             {
                 LightAndState state = light.Value;
                 builder.AppendLine($"[{(state.IsConnected ? "C" : "D")}] {light.Key} ({state.Light.MacAddressName}@{state.Light.HostName}:{state.Light.Port})");
@@ -125,5 +120,35 @@ namespace LifxLan.LIFX
 
             return builder.ToString();
         }
+        #endregion
+
+        #region Common Commands
+        public Task[] SetColor(ColorProperty color, double brightness, TimeSpan transition, params LightBulb[] lights)
+        {
+            return lights
+                .Select(l => Client.SetColorAsync(l, color.Hue, color.Saturation, ColorProperty.GetBrightness(brightness), color.Kelvin, transition))
+                .ToArray();
+        }
+
+        /// <summary>
+        /// Turn off all lights in <paramref name="lights"/> with duration <paramref name="duration"/>
+        /// </summary>
+        /// <param name="duration">Defaults to 0 if not specified</param>
+        /// <param name="lights"></param>
+        /// <returns>True if all commands completed successfully</returns>
+        public bool TurnOff(TimeSpan? duration = null, params string[] lights)
+        {
+            duration = duration ?? TimeSpan.Zero;
+
+            Task<CommandResponse>[] tasks = lights
+                .Select(l => CommandHandler.SendCommand(Client.TurnBulbOffAsync(LightAndStates[l].Light, duration.Value)))
+                .ToArray();
+
+            Task.WaitAll(tasks);
+
+            return tasks.All(t => t.Result.Successful);
+        }
+
+        #endregion
     }
 }

@@ -24,12 +24,26 @@ namespace LifxLan.LIFX
         public async Task<CommandResponse> SendCommand(Task command)
         {
             await Task.WhenAny(command, Task.Delay(_timeout));
-            Thread.Sleep(_delay);
 
             return new CommandResponse(command.IsCompleted);
         }
 
         public async Task<CommandResponse<TResult>> SendCommand<TResult>(Task<TResult> command)
+        {
+            await Task.WhenAny(command, Task.Delay(_timeout));
+
+            return command.IsCompleted ? new CommandResponse<TResult>(true, command.Result) : CommandResponse<TResult>.Failed();
+        }
+
+        public async Task<CommandResponse> SendCommandWithDelay(Task command)
+        {
+            await Task.WhenAny(command, Task.Delay(_timeout));
+            Thread.Sleep(_delay);
+
+            return new CommandResponse(command.IsCompleted);
+        }
+
+        public async Task<CommandResponse<TResult>> SendCommandWithDelay<TResult>(Task<TResult> command)
         {
             await Task.WhenAny(command, Task.Delay(_timeout));
             Thread.Sleep(_delay);
