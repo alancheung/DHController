@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace PiLightController.LIFX
+namespace LifxLan.LIFX
 {
     public class DelayedTaskSender
     {

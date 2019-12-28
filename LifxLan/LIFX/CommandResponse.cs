@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace PiLightController.LIFX
+namespace LifxLan.LIFX
 {
     public class CommandResponse
     {

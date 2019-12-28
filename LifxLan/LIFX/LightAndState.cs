@@ -1,7 +1,7 @@
 ﻿using LifxNet;
 using System;
 
-namespace PiLightController.LIFX
+namespace LifxLan.LIFX
 {
     public class LightAndState
     {
