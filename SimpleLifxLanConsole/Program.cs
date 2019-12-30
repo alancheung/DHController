@@ -31,7 +31,7 @@ namespace SimpleLifxLanConsole
             Console.WriteLine("Connected!");
             Console.ReadKey();
 
-            bool commandSent = lifx.TurnOff(TimeSpan.Zero, lifx.LightAndStates.Keys.ToArray());
+            bool commandSent = lifx.TurnOn(TimeSpan.FromSeconds(10), lifx.LightAndStates.Keys.ToArray());
             Console.WriteLine(commandSent);
             Console.ReadKey();
         }

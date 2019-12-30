@@ -14,6 +14,7 @@ namespace LifxLan.LIFX
         public LifxClient Client { get; private set; }
 
         public Dictionary<string, LightAndState> LightAndStates { get; }
+
         public List<LightBulb> Lights => LightAndStates.Select(l => l.Value.Light).ToList();
 
         public DelayedTaskSender CommandHandler { get; }
@@ -131,6 +132,25 @@ namespace LifxLan.LIFX
         }
 
         /// <summary>
+        /// Turn on all lights in <paramref name="lights"/> with duration <paramref name="duration"/>
+        /// </summary>
+        /// <param name="duration">Defaults to 0 if not specified</param>
+        /// <param name="lights"></param>
+        /// <returns>True if all commands completed successfully</returns>
+        public bool TurnOn(TimeSpan? duration = null, params string[] lights)
+        {
+            duration = duration ?? TimeSpan.Zero;
+
+            Task<CommandResponse>[] tasks = lights
+                .Select(l => CommandHandler.SendCommand(Client.TurnBulbOnAsync(LightAndStates[l].Light, duration.Value)))
+                .ToArray();
+
+            Task.WaitAll(tasks);
+
+            return tasks.All(t => t.Result.Successful);
+        }
+
+        /// <summary>
         /// Turn off all lights in <paramref name="lights"/> with duration <paramref name="duration"/>
         /// </summary>
         /// <param name="duration">Defaults to 0 if not specified</param>
@@ -148,7 +168,6 @@ namespace LifxLan.LIFX
 
             return tasks.All(t => t.Result.Successful);
         }
-
         #endregion
     }
 }
