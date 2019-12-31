@@ -16,17 +16,15 @@ namespace DHCService
         {
             if (Environment.UserInteractive)
             {
-                DHCService service1 = new DHCService();
-                service1.DebugStart(args);
+                DHCService service = new DHCService();
+                service.DebugStart(args);
             }
             else
             {
-                ServiceBase[] ServicesToRun;
-                ServicesToRun = new ServiceBase[]
+                ServiceBase.Run(new ServiceBase[]
                 {
                     new DHCService()
-                };
-                ServiceBase.Run(ServicesToRun);
+                });
             }
         }
 
