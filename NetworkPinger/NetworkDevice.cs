@@ -65,7 +65,7 @@ namespace NetworkPinger
                 + $"{nameof(IPAddress)}: {IPAddress}" + Environment.NewLine
                 + $"{nameof(Connected)}: {Connected}" + Environment.NewLine
                 + $"{nameof(LastConnectedTime)}: {LastConnectedTime}" + Environment.NewLine
-                + $"{nameof(Attempts)}: {Attempts}" + Environment.NewLine;
+                + $"{nameof(Attempts)}: {Attempts}";
         }
     }
 }

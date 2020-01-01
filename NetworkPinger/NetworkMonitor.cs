@@ -13,6 +13,9 @@ namespace NetworkPinger
 {
     public class NetworkMonitor
     {
+        /// <summary>
+        /// All found devices on the network key'd by their host name.
+        /// </summary>
         public Dictionary<string, NetworkDevice> NetworkDevices;
         public IEnumerable<NetworkDevice> ConnectedDevices => NetworkDevices.Where(d => d.Value.Connected == true).Select(valueSelector => valueSelector.Value);
         public IEnumerable<NetworkDevice> DisconnectedDevices => NetworkDevices.Where(d => d.Value.Connected == false).Select(valueSelector => valueSelector.Value);
@@ -29,16 +32,17 @@ namespace NetworkPinger
 
         public void Initialize()
         {
+            // First attempt to connect to all devices specified.
             PingAllDevices();
 
             // 5 minute timer for connected devices
-            Timer connectedTimer = new Timer(.5 * 60 * 1000);
+            Timer connectedTimer = new Timer(5 * 60 * 1000);
             connectedTimer.Elapsed += ConnectedTimer_Elapsed;
             connectedTimer.Enabled = true;
             connectedTimer.AutoReset = true;
 
             // 30 second timer for disconnected devices
-            Timer disconnectedTimer = new Timer(5 * 1000);
+            Timer disconnectedTimer = new Timer(30 * 1000);
             disconnectedTimer.Elapsed += DisconnectedTimer_Elapsed;
             disconnectedTimer.Enabled = true;
             disconnectedTimer.AutoReset = true;
@@ -66,14 +70,7 @@ namespace NetworkPinger
             string hostName = (string)e.UserState;
             NetworkDevice device = NetworkDevices[hostName];
 
-            SmartLogger.Log($"{DateTime.Now}: {hostName} completed ping.");
-            if (e.Reply == null)
-            {
-                SmartLogger.Log($"Pinging {hostName} failed. (Null Reply object?)");
-
-                device.MarkAsDisconnected();
-            }
-            if (e.Reply.Status == IPStatus.Success)
+            if (e.Reply?.Status == IPStatus.Success)
             {
                 IPAddress[] addresses;
                 try
@@ -87,14 +84,10 @@ namespace NetworkPinger
 
                 string addr = addresses == null ? "Exception Occurred" : string.Join(", ", addresses.Select(a => a.ToString()));
                 device.IPAddress = addr;
-                SmartLogger.Log($"{hostName} ({addr}) is up: ({e.Reply.RoundtripTime} ms)");
-
                 device.MarkAsConnected();
             }
-            else if (e.Reply.Status != IPStatus.Success)
+            else
             {
-                SmartLogger.Log($"Pinging {hostName} failed with status ({e.Reply.Status.ToString()})");
-
                 device.MarkAsDisconnected();
             }
         }
@@ -103,8 +96,8 @@ namespace NetworkPinger
         {
             foreach (NetworkDevice device in ConnectedDevices)
             {
-                Console.Write($"{DateTime.Now}: Sending message to connected device {Environment.NewLine}" +
-                    $"({device.ToString()})");
+                SmartLogger.Log($"Sending message to connected device." +
+                    $"{Environment.NewLine}{device.ToString()}");
 
                 PingDevice(device.HostName);
             }
@@ -114,8 +107,8 @@ namespace NetworkPinger
         {
             foreach (NetworkDevice device in DisconnectedDevices)
             {
-                Console.Write($"{DateTime.Now}: Sending message to disconnected device {Environment.NewLine}" +
-                    $"({device.ToString()})");
+                SmartLogger.Log($"Sending message to disconnected device." +
+                    $"{Environment.NewLine}{device.ToString()}");
 
                 PingDevice(device.HostName);
             }
