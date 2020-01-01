@@ -9,16 +9,21 @@ namespace Common.Logging
 {
     public class SmartLogger
     {
+        private static object lockObj = new object();
+
         public static void Log(string message)
         {
 #if DEBUG
-            Console.WriteLine(message);
+            Console.WriteLine($"{DateTime.Now}: {message}");
 #else
-            string logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "log.txt");
-            StreamWriter sw = File.CreateText(logFilePath);
-            sw.WriteLine(message);
-            sw.Flush();
-            sw.Close();
+            lock (lockObj)
+            {
+                string logFilePath = Path.Combine(Directory.GetCurrentDirectory(), "log.txt");
+                StreamWriter sw = File.CreateText(logFilePath);
+                sw.WriteLine(message);
+                sw.Flush();
+                sw.Close();
+            }
 #endif
 
         }
