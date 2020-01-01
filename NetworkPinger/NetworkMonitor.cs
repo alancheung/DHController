@@ -30,39 +30,64 @@ namespace NetworkPinger
             }
         }
 
-        public void Initialize()
+        public void Initialize(double connectedPingTimeMs, double disconnectedPingTimeMs)
         {
             // First attempt to connect to all devices specified.
             PingAllDevices();
 
-            // 5 minute timer for connected devices
-            Timer connectedTimer = new Timer(5 * 60 * 1000);
+            Timer connectedTimer = new Timer(connectedPingTimeMs);
             connectedTimer.Elapsed += ConnectedTimer_Elapsed;
             connectedTimer.Enabled = true;
             connectedTimer.AutoReset = true;
 
-            // 30 second timer for disconnected devices
-            Timer disconnectedTimer = new Timer(30 * 1000);
+            Timer disconnectedTimer = new Timer(disconnectedPingTimeMs);
             disconnectedTimer.Elapsed += DisconnectedTimer_Elapsed;
             disconnectedTimer.Enabled = true;
             disconnectedTimer.AutoReset = true;
         }
 
-        public void PingDevice(string hostOrAddress)
+        private void ConnectedTimer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            Ping p = new Ping();
-            p.PingCompleted += new PingCompletedEventHandler(OnPingCompleted);
-            p.SendAsync(hostOrAddress, 1000, hostOrAddress);
+            foreach (NetworkDevice device in ConnectedDevices)
+            {
+                SmartLogger.Log($"Sending message to connected device." +
+                    $"{Environment.NewLine}{device.ToString()}");
+
+                PingDevice(device.HostName);
+            }
         }
 
+        private void DisconnectedTimer_Elapsed(object sender, ElapsedEventArgs e)
+        {
+            foreach (NetworkDevice device in DisconnectedDevices)
+            {
+                SmartLogger.Log($"Sending message to disconnected device." +
+                    $"{Environment.NewLine}{device.ToString()}");
+
+                PingDevice(device.HostName);
+            }
+        }
+
+        /// <summary>
+        /// Ping all known devices.
+        /// </summary>
         public void PingAllDevices()
         {
             foreach (string host in NetworkDevices.Keys)
             {
-                Ping p = new Ping();
-                p.PingCompleted += new PingCompletedEventHandler(OnPingCompleted);
-                p.SendAsync(host, 1000, host);
+                PingDevice(host);
             }
+        }
+
+        /// <summary>
+        /// Ping a single device with a given host name or IP address. The address must be known.
+        /// </summary>
+        /// <param name="hostName"></param>
+        private void PingDevice(string hostName)
+        {
+            Ping p = new Ping();
+            p.PingCompleted += new PingCompletedEventHandler(OnPingCompleted);
+            p.SendAsync(hostName, 1000, hostName);
         }
 
         private void OnPingCompleted(object sender, PingCompletedEventArgs e)
@@ -89,28 +114,6 @@ namespace NetworkPinger
             else
             {
                 device.MarkAsDisconnected();
-            }
-        }
-
-        private void ConnectedTimer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            foreach (NetworkDevice device in ConnectedDevices)
-            {
-                SmartLogger.Log($"Sending message to connected device." +
-                    $"{Environment.NewLine}{device.ToString()}");
-
-                PingDevice(device.HostName);
-            }
-        }
-
-        private void DisconnectedTimer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            foreach (NetworkDevice device in DisconnectedDevices)
-            {
-                SmartLogger.Log($"Sending message to disconnected device." +
-                    $"{Environment.NewLine}{device.ToString()}");
-
-                PingDevice(device.HostName);
             }
         }
     }
