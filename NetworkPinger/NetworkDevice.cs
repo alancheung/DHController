@@ -41,7 +41,7 @@ namespace NetworkPinger
 
             HostName = hostName;
             LastConnectedTime = DateTime.MinValue;
-            Attempts = 0;
+            Attempts = connectionAttemptsBeforeDisconnect + 1;
         }
 
         public void MarkAsConnected()
@@ -61,11 +61,11 @@ namespace NetworkPinger
 
         public override string ToString()
         {
-            return $"{nameof(HostName)}: {HostName}" + Environment.NewLine 
-                + $"{nameof(IPAddress)}: {IPAddress}" + Environment.NewLine
-                + $"{nameof(Connected)}: {Connected}" + Environment.NewLine
-                + $"{nameof(LastConnectedTime)}: {LastConnectedTime}" + Environment.NewLine
-                + $"{nameof(Attempts)}: {Attempts}";
+            return $"\t{nameof(HostName)}: {HostName}" + Environment.NewLine 
+                + $"\t{nameof(IPAddress)}: {IPAddress}" + Environment.NewLine
+                + $"\t{nameof(Connected)}: {Connected}" + Environment.NewLine
+                + $"\t{nameof(LastConnectedTime)}: {LastConnectedTime}" + Environment.NewLine
+                + $"\t{nameof(Attempts)}: {Attempts}";
         }
     }
 }

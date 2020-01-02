@@ -26,7 +26,6 @@ namespace Simple.NetworkPinger
             // connected = 5 minutes, disconnected = 30 seconds
             monitor.Initialize(5 * 60 * 1000, 30 * 1000);
 
-
             Console.ReadKey();
         }
     }

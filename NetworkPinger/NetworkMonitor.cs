@@ -50,7 +50,7 @@ namespace NetworkPinger
         {
             foreach (NetworkDevice device in ConnectedDevices)
             {
-                SmartLogger.Log($"Sending message to connected device." +
+                SmartLogger.Log($"Sending message to connected device:" +
                     $"{Environment.NewLine}{device.ToString()}");
 
                 PingDevice(device.HostName);
@@ -61,7 +61,7 @@ namespace NetworkPinger
         {
             foreach (NetworkDevice device in DisconnectedDevices)
             {
-                SmartLogger.Log($"Sending message to disconnected device." +
+                SmartLogger.Log($"Sending message to disconnected device:" +
                     $"{Environment.NewLine}{device.ToString()}");
 
                 PingDevice(device.HostName);
