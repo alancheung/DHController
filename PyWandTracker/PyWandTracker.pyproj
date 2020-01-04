@@ -24,6 +24,9 @@
   <ItemGroup>
     <Compile Include="ImgMask.py" />
     <Compile Include="PiNoirWandTracker.py" />
+    <Compile Include="trainingImageRecorder.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="wandTracker.py" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
