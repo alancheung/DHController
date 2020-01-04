@@ -67,6 +67,8 @@ while 1:
 	# update the points queue
     pts.appendleft(center)
 
+    drawTrackingLine()
+
     # TODO change this to be configurable value??
     # detect likely spell if the number of tracked points is >=50%
     numPointsTracked = sum(1 for p in pts if p is not None)
@@ -74,11 +76,6 @@ while 1:
         print 'Shape is probable!' + str(numPointsTracked)
         spell = detectSpell()
         print spell
-
-    
-    # TODO control view port/this extra work by argument
-    drawTrackingLine()
-
     # loop and show frame
     cv2.imshow('raw', frame)
     cv2.imshow('raw-grey', frame_gray)

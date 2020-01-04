@@ -22,12 +22,24 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="classificationTest.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="common.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="ImgMask.py" />
     <Compile Include="PiNoirWandTracker.py" />
     <Compile Include="trainingImageRecorder.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="trainSvm.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="wandTracker.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="digits.png" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
