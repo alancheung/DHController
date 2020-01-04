@@ -26,7 +26,7 @@ namespace LifxLan.LIFX
 
             if (numLights > 0 && !Initialize(numLights, discoveryTimeout))
             {
-                throw new TimeoutException("Did not discover all lights within timeout!");
+                throw new TimeoutException($"Failed to discover {numLights - LightAndStates.Count} of {numLights} lights before timeout!");
             }
         }
 
@@ -124,11 +124,19 @@ namespace LifxLan.LIFX
         #endregion
 
         #region Common Commands
-        public Task[] SetColor(ColorProperty color, double brightness, TimeSpan transition, params LightBulb[] lights)
+        public void SetBrightness(double brightness, TimeSpan transition, params string[] lights)
         {
-            return lights
+            IEnumerable<LightAndState> commandedLights = LightAndStates.Where(l => lights.Contains(l.Key)).Select(l => l.Value);
+            Task.WaitAll(commandedLights
+                .Select(l => Client.SetColorAsync(l.Light, l.State.Hue, l.State.Saturation, ColorProperty.GetBrightness(brightness), l.State.Kelvin, transition))
+                .ToArray()); 
+        }
+
+        public void SetColor(ColorProperty color, double brightness, TimeSpan transition, params LightBulb[] lights)
+        {
+            Task.WaitAll(lights
                 .Select(l => Client.SetColorAsync(l, color.Hue, color.Saturation, ColorProperty.GetBrightness(brightness), color.Kelvin, transition))
-                .ToArray();
+                .ToArray());
         }
 
         /// <summary>
