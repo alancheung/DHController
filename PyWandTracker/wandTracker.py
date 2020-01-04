@@ -16,6 +16,16 @@ thresh = 40
 def detectSpell():
     return 'idk'
 
+# loop over the set of tracked points so that we can draw a line for human eyes.
+def drawTrackingLine():
+    for i in range(1, len(pts)):
+        # if either of the tracked points are None, ignore them
+        if pts[i - 1] is None or pts[i] is None:
+            continue
+
+        # otherwise, draw the connecting lines
+        cv2.line(frame_gray, pts[i - 1], pts[i], (255, 0, 0), thickness = 5)
+
 while 1:
     # read from camera
     (grabbed, frame) = camera.read()
@@ -57,23 +67,17 @@ while 1:
 	# update the points queue
     pts.appendleft(center)
 
-    # loop over the set of tracked points so that we can draw a line for human eyes.
-    # TODO control view port/this extra work by argument
-    for i in range(1, len(pts)):
-        # if either of the tracked points are None, ignore them
-        if pts[i - 1] is None or pts[i] is None:
-            continue
-
-        # otherwise, compute the thickness of the line and draw the connecting lines
-        cv2.line(frame_gray, pts[i - 1], pts[i], (255, 0, 0), thickness = 5)
-
-    # TODO change this to be configurable value
+    # TODO change this to be configurable value??
     # detect likely spell if the number of tracked points is >=50%
     numPointsTracked = sum(1 for p in pts if p is not None)
     if numPointsTracked >= (len(pts) / 2):
         print 'Shape is probable!' + str(numPointsTracked)
         spell = detectSpell()
         print spell
+
+    
+    # TODO control view port/this extra work by argument
+    drawTrackingLine()
 
     # loop and show frame
     cv2.imshow('raw', frame)
