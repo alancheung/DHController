@@ -1,0 +1,15 @@
+﻿<Window x:Class="DHClient.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:DHClient"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="450" Width="374.447">
+    <Grid>
+        <Image x:Name="Office" HorizontalAlignment="Right" Height="399" Margin="0,0,51,0" VerticalAlignment="Top" Width="305" Stretch="UniformToFill" Source="/Images/Layout/OfficeLayout.png"/>
+        <Button Content="Office One" HorizontalAlignment="Left" Margin="199.851,108.189,0,0" VerticalAlignment="Top" Width="75" UseLayoutRounding="False" Click="OfficeOneClick"/>
+        <Label x:Name="Status" Content="Label" HorizontalAlignment="Left" Margin="10,393,0,0" VerticalAlignment="Top" RenderTransformOrigin="0.789,15.68" Width="196"/>
+
+    </Grid>
+</Window>
