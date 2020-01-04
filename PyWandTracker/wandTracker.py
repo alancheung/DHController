@@ -67,7 +67,13 @@ while 1:
         # otherwise, compute the thickness of the line and draw the connecting lines
         cv2.line(frame_gray, pts[i - 1], pts[i], (255, 0, 0), thickness = 5)
 
-    
+    # TODO change this to be configurable value
+    # detect likely spell if the number of tracked points is >=50%
+    numPointsTracked = sum(1 for p in pts if p is not None)
+    if numPointsTracked >= (len(pts) / 2):
+        print 'Shape is probable!' + str(numPointsTracked)
+        spell = detectSpell()
+        print spell
 
     # loop and show frame
     cv2.imshow('raw', frame)
