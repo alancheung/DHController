@@ -2,22 +2,13 @@ from collections import deque
 import numpy as np
 import cv2
 import imutils
-
-kernel = np.ones((5,5),np.uint8)
-pts = deque(maxlen=64)
-
-# initialize camera and size window size as 640px by 480px
-camera = cv2.VideoCapture(0)
-camera.set(3, 640)
-camera.set(4, 480)
-
-thresh = 40
+import time
 
 def detectSpell():
     return 'idk'
 
 # loop over the set of tracked points so that we can draw a line for human eyes.
-def drawTrackingLine():
+def drawTrackingLine(frame_gray):
     for i in range(1, len(pts)):
         # if either of the tracked points are None, ignore them
         if pts[i - 1] is None or pts[i] is None:
@@ -25,6 +16,15 @@ def drawTrackingLine():
 
         # otherwise, draw the connecting lines
         cv2.line(frame_gray, pts[i - 1], pts[i], (255, 0, 0), thickness = 5)
+
+# The list of currently tracked points
+pts = deque(maxlen=64)
+kernel = np.ones((5,5),np.uint8)
+thresh = 40
+
+# Initialize camera with 2s delay for camera to warm up
+camera = cv2.VideoCapture(0)
+time.sleep(2)
 
 while 1:
     # read from camera
@@ -36,7 +36,7 @@ while 1:
     cv2.equalizeHist(frame_gray)
 
     # resize image for faster processing.
-    #frame_gray = cv2.resize(frame_gray, (120, 120), interpolation = cv2.INTER_CUBIC)
+    # frame_gray = cv2.resize(frame_gray, (120, 120), interpolation = cv2.INTER_CUBIC)
 
     # find the point by looking for pixels >threshold
     th, frame_gray = cv2.threshold(frame_gray, thresh, 255, cv2.THRESH_BINARY)
@@ -67,15 +67,23 @@ while 1:
 	# update the points queue
     pts.appendleft(center)
 
-    drawTrackingLine()
-
-    # TODO change this to be configurable value??
+    # TODO change the threshold of points to be configurable value??
     # detect likely spell if the number of tracked points is >=50%
+    drawTrackingLine(frame_gray)
     numPointsTracked = sum(1 for p in pts if p is not None)
     if numPointsTracked >= (len(pts) / 2):
         print 'Shape is probable!' + str(numPointsTracked)
+
+        ## Get minimum image to verify
+        #fullCnts = cv2.findContours(frame_gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
+        #(x,y), radius = cv2.minEnclosingCircle(cnts[0])
+
+        ## Debug, draw circle around image.
+        #cv2.circle(frame_gray, (int(x), int(y)), int(radius), (0, 255, 255), 2)
+
         spell = detectSpell()
         print spell
+
     # loop and show frame
     cv2.imshow('raw', frame)
     cv2.imshow('raw-grey', frame_gray)
