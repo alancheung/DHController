@@ -22,7 +22,7 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="classificationTest.py">
+    <Compile Include="classificationTutorial.py">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="common.py">
