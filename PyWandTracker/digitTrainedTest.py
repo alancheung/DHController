@@ -61,7 +61,8 @@ def preprocess_hog(image):
     hist = np.sqrt(hist)
     hist /= norm(hist) + eps
 
-    samples.append(hist)
+    for i in range(0, 499):
+        samples.append(hist)
     return np.float32(samples)
 
 datFile = trainingDirPath + 'digits_svm.dat'
@@ -79,6 +80,7 @@ for i in range(1, 10):
         print process.shape
 
         process = np.asmatrix(process)
+        process = np.float32(process)
         print svm.predict(process)
 
         #h, w = image.shape[:2]

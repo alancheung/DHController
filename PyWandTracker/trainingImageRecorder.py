@@ -70,7 +70,7 @@ while 1:
     # detect likely spell if the number of tracked points is >=50%
     numPointsTracked = sum(1 for p in pts if p is not None)
     if numPointsTracked == len(pts):
-        filePath = '/home/pi/Desktop/WandTraining/shape1/' + 'shape1-' + str(imgCount) + '.png'
+        filePath = '/home/pi/Desktop/WandTraining/Shapes/HorizontalLine/' + 'shape2-' + str(imgCount) + '.png'
         print filePath
         cv2.imwrite(filePath, frame_gray)
         imgCount+=1

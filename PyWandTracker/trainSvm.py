@@ -39,8 +39,8 @@ class SVM(StatModel):
     def predict(self, samples):
         return self.model.predict(samples)[1].ravel()
 
-def createTrainingImgName(count):
-    return 'shape1-' + str(count) + '.png'
+def createTrainingImgName(shape, count):
+    return shape + '-' + str(count) + '.png'
 
 # Resize arg(image) with height and width = arg((height,width)) to scale = arg(scale)
 def resizeImage(image, (height, width), scale):
@@ -82,34 +82,60 @@ def preprocess_hog(images):
     return np.float32(samples)
 
 # read all images and process data
+shape1Count = 0
+lineCount = 0
+
 trainingImageData = []
-for i in range(1, 10):
-    fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName(i)
+for i in range(1, 500):
+    fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName('shape1', i)
     if path.exists(fullPath):
-        print fullPath
+        shape1Count += 1
+        image = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
+        process = preprocess_hog(image)
+        trainingImageData.append(process)
+
+# read all images and process data
+for i in range(1, 500):
+    fullPath = trainingDirPath + 'HorizontalLine/' + createTrainingImgName('shape2', i)
+    if path.exists(fullPath):
+        lineCount += 1
         image = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
         process = preprocess_hog(image)
         trainingImageData.append(process)
 
 processImages = preprocess_hog(trainingImageData)
-print processImages
+print 'shape1 count ' + str(shape1Count)
+print 'line ' + str(lineCount)
 print processImages.shape
 
 # TODO figure out how to make this dynamic
 # for now hardcode
-labels = np.mat([1, 1, 1, 1, 1, 1, 1, 1, 1])
+labels = np.mat([1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 print labels
 
 svm = SVM(C = 2.67, gamma = 5.383)
 svm.train(processImages, labels)
 
 
-
-fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName(20)
+print 'Test Image 20'
+fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName('shape1', 20)
 testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
 testImageProcess = preprocess_hog(image)
 resp = svm.predict(testImageProcess)
+print resp
+confusion = np.zeros((10, 10), np.int32)
+for i, j in zip(labels, resp):
+    confusion[i, int(j)] += 1
+print('confusion matrix:')
+print(confusion)
+print()
 
+print 'Test Image Fail'
+fullPath = trainingDirPath + 'HorizontalLine/shape2-108.png'
+testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
+testImageProcess = preprocess_hog(image)
+resp = svm.predict(testImageProcess)
+print resp
 confusion = np.zeros((10, 10), np.int32)
 for i, j in zip(labels, resp):
     confusion[i, int(j)] += 1
