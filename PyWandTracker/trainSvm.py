@@ -81,6 +81,7 @@ def preprocess_hog(images):
         samples.append(hist)
     return np.float32(samples)
 
+# read all images and process data
 trainingImageData = []
 for i in range(1, 10):
     fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName(i)
@@ -90,12 +91,12 @@ for i in range(1, 10):
         process = preprocess_hog(image)
         trainingImageData.append(process)
 
-        #cv2.imshow('hog', process)
-
 processImages = preprocess_hog(trainingImageData)
 print processImages
 print processImages.shape
 
+# TODO figure out how to make this dynamic
+# for now hardcode
 labels = np.mat([1, 1, 1, 1, 1, 1, 1, 1, 1])
 print labels
 
