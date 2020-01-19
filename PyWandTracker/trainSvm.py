@@ -105,6 +105,8 @@ for i in range(1, 500):
 # read all images and process data
 for i in range(1, 500):
     fullPath = trainingDirPath + 'HorizontalLine/' + createTrainingImgName('shape2', i)
+    if lineCount == 70:
+        break
     if path.exists(fullPath):
         lineCount += 1
         image = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
@@ -119,38 +121,39 @@ print processImages.shape
 
 # TODO figure out how to make this dynamic
 # for now hardcode
-labels = np.mat([1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
+labels = np.mat([1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 
+                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
+                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 print labels
 
 svm = SVM(C = 2.67, gamma = 5.383)
 svm.train(processImages, labels)
 
 
-print 'Test Image 20'
-fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName('shape1', 20)
+print 'Test Image 1'
+fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName('shape1', 50)
 testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
 crop_img = cropImage(testImage)
 testImageProcess = preprocess_hog(crop_img)
 resp = svm.predict(testImageProcess)
 print resp
-confusion = np.zeros((10, 10), np.int32)
-for i, j in zip(labels, resp):
-    confusion[i, int(j)] += 1
-print('confusion matrix:')
-print(confusion)
-print()
 
-print 'Test Image Fail'
-fullPath = trainingDirPath + 'HorizontalLine/shape2-108.png'
+print 'Test Image 2'
+fullPath = trainingDirPath + 'HorizontalLine/shape2-120.png'
 testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
 crop_img = cropImage(testImage)
 testImageProcess = preprocess_hog(crop_img)
 testImageProcess = preprocess_hog(testImage)
 resp = svm.predict(testImageProcess)
 print resp
-confusion = np.zeros((10, 10), np.int32)
-for i, j in zip(labels, resp):
-    confusion[i, int(j)] += 1
-print('confusion matrix:')
-print(confusion)
-print()
