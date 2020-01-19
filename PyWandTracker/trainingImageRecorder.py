@@ -2,14 +2,17 @@ from collections import deque
 import numpy as np
 import cv2
 import imutils
+import argparse
 
 kernel = np.ones((5,5),np.uint8)
 pts = deque(maxlen=64)
 
+parser = argparse.ArgumentParser(description = 'Record training images for Pi Wand Tracker')
+parser.add_argument('path', type='string', help='File path to save images to')
+parser.add_argument()
+
 # initialize camera and size window size as 640px by 480px
 camera = cv2.VideoCapture(0)
-camera.set(3, 640)
-camera.set(4, 480)
 
 imgCount = 1
 thresh = 40
