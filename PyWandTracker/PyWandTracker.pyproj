@@ -28,6 +28,9 @@
     <Compile Include="common.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="digitTrainedTest.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="ImgMask.py" />
     <Compile Include="PiNoirWandTracker.py" />
     <Compile Include="trainingImageRecorder.py">
@@ -40,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="digits.png" />
+    <Content Include="digits_svm.dat" />
     <Content Include="Shapes\circle\shape1-1.png" />
     <Content Include="Shapes\circle\shape1-10.png" />
     <Content Include="Shapes\circle\shape1-11.png" />
