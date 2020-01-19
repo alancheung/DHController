@@ -78,6 +78,7 @@ for i in range(1, 10):
         print process
         print process.shape
 
+        process = np.asmatrix(process)
         print svm.predict(process)
 
         #h, w = image.shape[:2]

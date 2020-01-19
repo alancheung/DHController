@@ -59,44 +59,59 @@ def deskew(image, (height, width)):
     image = cv2.warpAffine(image, M, (height, width), flags=cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR)
     return image
 
-def preprocess_hog(image):
-    gx = cv2.Sobel(image, cv2.CV_32F, 1, 0)
-    gy = cv2.Sobel(image, cv2.CV_32F, 0, 1)
-    mag, ang = cv2.cartToPolar(gx, gy)
-    bin_n = 16
-    bin = np.int32(bin_n*ang/(2*np.pi))
-    bin_cells = bin[:10,:10], bin[10:,:10], bin[:10,10:], bin[10:,10:]
-    mag_cells = mag[:10,:10], mag[10:,:10], mag[:10,10:], mag[10:,10:]
-    hists = [np.bincount(b.ravel(), m.ravel(), bin_n) for b, m in zip(bin_cells, mag_cells)]
-    hist = np.hstack(hists)
+def preprocess_hog(images):
+    samples = []
+    for img in images:
+        gx = cv2.Sobel(img, cv2.CV_32F, 1, 0)
+        gy = cv2.Sobel(img, cv2.CV_32F, 0, 1)
+        mag, ang = cv2.cartToPolar(gx, gy)
+        bin_n = 16
+        bin = np.int32(bin_n*ang/(2*np.pi))
+        bin_cells = bin[:10,:10], bin[10:,:10], bin[:10,10:], bin[10:,10:]
+        mag_cells = mag[:10,:10], mag[10:,:10], mag[:10,10:], mag[10:,10:]
+        hists = [np.bincount(b.ravel(), m.ravel(), bin_n) for b, m in zip(bin_cells, mag_cells)]
+        hist = np.hstack(hists)
 
-    # transform to Hellinger kernel
-    eps = 1e-7
-    hist /= hist.sum() + eps
-    hist = np.sqrt(hist)
-    hist /= norm(hist) + eps
+        # transform to Hellinger kernel
+        eps = 1e-7
+        hist /= hist.sum() + eps
+        hist = np.sqrt(hist)
+        hist /= norm(hist) + eps
 
-    return hist
+        samples.append(hist)
+    return np.float32(samples)
 
 trainingImageData = []
-trainingImages = []
 for i in range(1, 10):
     fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName(i)
     if path.exists(fullPath):
         print fullPath
         image = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
-        h, w = image.shape[:2]
-        image = resizeImage(image, (h,w), 40)
         process = preprocess_hog(image)
-        
-        trainingImages.append(image)
         trainingImageData.append(process)
 
-        cv2.imshow('scaled', image)
-        cv2.imshow('hog', process)
-        cv2.waitKey(0)
+        #cv2.imshow('hog', process)
+
+processImages = preprocess_hog(trainingImageData)
+print processImages
+print processImages.shape
+
+labels = np.mat([1, 1, 1, 1, 1, 1, 1, 1, 1])
+print labels
 
 svm = SVM(C = 2.67, gamma = 5.383)
-svm.train(trainingImageData, np.array('circle'))
+svm.train(processImages, labels)
 
-sampleImage = trainingDirPath + trainingShapeDirPath + createTrainingImgName(11)
+
+
+fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName(20)
+testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
+testImageProcess = preprocess_hog(image)
+resp = svm.predict(testImageProcess)
+
+confusion = np.zeros((10, 10), np.int32)
+for i, j in zip(labels, resp):
+    confusion[i, int(j)] += 1
+print('confusion matrix:')
+print(confusion)
+print()
