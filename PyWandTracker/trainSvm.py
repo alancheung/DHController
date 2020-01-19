@@ -81,22 +81,26 @@ def preprocess_hog(images):
         samples.append(hist)
     return np.float32(samples)
 
+def cropImage(image):
+    cnts = cv2.findContours(image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
+    cnt = max(cnts, key=cv2.contourArea)
+    x,y,w,h = cv2.boundingRect(cnt)
+    crop_img = image[y:y+h, x:x+w]
+    return crop_img
+
 # read all images and process data
 shape1Count = 0
 lineCount = 0
 
 readImages = []
-trainingImageData = []
 for i in range(1, 500):
     fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName('shape1', i)
     if path.exists(fullPath):
         shape1Count += 1
         image = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
+        crop_img = cropImage(image)
 
-        
-
-        process = preprocess_hog(image)
-        trainingImageData.append(process)
+        readImages.append(crop_img)
 
 # read all images and process data
 for i in range(1, 500):
@@ -104,13 +108,11 @@ for i in range(1, 500):
     if path.exists(fullPath):
         lineCount += 1
         image = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
+        crop_img = cropImage(image)
 
-        
+        readImages.append(crop_img)
 
-        process = preprocess_hog(image)
-        trainingImageData.append(process)
-
-processImages = preprocess_hog(trainingImageData)
+processImages = preprocess_hog(readImages)
 print 'shape1 count ' + str(shape1Count)
 print 'line ' + str(lineCount)
 print processImages.shape
@@ -127,7 +129,8 @@ svm.train(processImages, labels)
 print 'Test Image 20'
 fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName('shape1', 20)
 testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
-testImageProcess = preprocess_hog(testImage)
+crop_img = cropImage(testImage)
+testImageProcess = preprocess_hog(crop_img)
 resp = svm.predict(testImageProcess)
 print resp
 confusion = np.zeros((10, 10), np.int32)
@@ -140,6 +143,8 @@ print()
 print 'Test Image Fail'
 fullPath = trainingDirPath + 'HorizontalLine/shape2-108.png'
 testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
+crop_img = cropImage(testImage)
+testImageProcess = preprocess_hog(crop_img)
 testImageProcess = preprocess_hog(testImage)
 resp = svm.predict(testImageProcess)
 print resp
