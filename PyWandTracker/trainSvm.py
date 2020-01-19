@@ -85,12 +85,16 @@ def preprocess_hog(images):
 shape1Count = 0
 lineCount = 0
 
+readImages = []
 trainingImageData = []
 for i in range(1, 500):
     fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName('shape1', i)
     if path.exists(fullPath):
         shape1Count += 1
         image = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
+
+        
+
         process = preprocess_hog(image)
         trainingImageData.append(process)
 
@@ -100,6 +104,9 @@ for i in range(1, 500):
     if path.exists(fullPath):
         lineCount += 1
         image = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
+
+        
+
         process = preprocess_hog(image)
         trainingImageData.append(process)
 
@@ -120,7 +127,7 @@ svm.train(processImages, labels)
 print 'Test Image 20'
 fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName('shape1', 20)
 testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
-testImageProcess = preprocess_hog(image)
+testImageProcess = preprocess_hog(testImage)
 resp = svm.predict(testImageProcess)
 print resp
 confusion = np.zeros((10, 10), np.int32)
@@ -133,7 +140,7 @@ print()
 print 'Test Image Fail'
 fullPath = trainingDirPath + 'HorizontalLine/shape2-108.png'
 testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
-testImageProcess = preprocess_hog(image)
+testImageProcess = preprocess_hog(testImage)
 resp = svm.predict(testImageProcess)
 print resp
 confusion = np.zeros((10, 10), np.int32)
