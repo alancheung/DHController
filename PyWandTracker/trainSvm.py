@@ -49,14 +49,15 @@ def resizeImage(image, (height, width), scale):
     dim = (w, h)
     return cv2.resize(image, dim, interpolation=cv2.INTER_AREA)
 
-def deskew(image, (height, width)):
+def deskew(image):
     m = cv2.moments(image)
+    (h,w) = image.shape
     if abs(m['mu02']) < 1e-2:
         return image
     skew = m['mu11']/m['mu02']
     # TODO fix height in M. It assumes square images.
-    M = np.float32([[1, skew, -0.5*(height)*skew], [0, 1, 0]])
-    image = cv2.warpAffine(image, M, (height, width), flags=cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR)
+    M = np.float32([[1, skew, -0.5*(h)*skew], [0, 1, 0]])
+    image = cv2.warpAffine(image, M, (h,w), flags=cv2.WARP_INVERSE_MAP | cv2.INTER_LINEAR)
     return image
 
 def preprocess_hog(images):
@@ -99,20 +100,20 @@ for i in range(1, 500):
         shape1Count += 1
         image = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
         crop_img = cropImage(image)
-
-        readImages.append(crop_img)
+        deskewed_img = deskew(crop_img)
+        readImages.append(deskewed_img)
 
 # read all images and process data
-for i in range(1, 500):
+for i in range(30, 100):
     fullPath = trainingDirPath + 'HorizontalLine/' + createTrainingImgName('shape2', i)
-    if lineCount == 70:
+    if lineCount == 50:
         break
     if path.exists(fullPath):
         lineCount += 1
         image = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
         crop_img = cropImage(image)
-
-        readImages.append(crop_img)
+        deskewed_img = deskew(crop_img)
+        readImages.append(deskewed_img)
 
 processImages = preprocess_hog(readImages)
 print 'shape1 count ' + str(shape1Count)
@@ -132,8 +133,6 @@ labels = np.mat([1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
                  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
                  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
-                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
-                 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
                  2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 print labels
 
@@ -142,18 +141,27 @@ svm.train(processImages, labels)
 
 
 print 'Test Image 1'
-fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName('shape1', 50)
-testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
-crop_img = cropImage(testImage)
-testImageProcess = preprocess_hog(crop_img)
-resp = svm.predict(testImageProcess)
-print resp
+for i in range(1, 500):
+    fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName('shape1', i)
+    if path.exists(fullPath):
+        print fullPath
+        testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
+        crop_img = cropImage(testImage)
+        deskewed_img = deskew(crop_img)
+        testImageProcess = preprocess_hog(deskewed_img)
+        resp = svm.predict(testImageProcess)
+        print resp[0]
+
+
 
 print 'Test Image 2'
-fullPath = trainingDirPath + 'HorizontalLine/shape2-120.png'
-testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
-crop_img = cropImage(testImage)
-testImageProcess = preprocess_hog(crop_img)
-testImageProcess = preprocess_hog(testImage)
-resp = svm.predict(testImageProcess)
-print resp
+for i in range(1, 500):
+    fullPath = trainingDirPath + 'HorizontalLine/shape2-' + str(i) + '.png'
+    if path.exists(fullPath):
+        print fullPath
+        testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
+        crop_img = cropImage(testImage)
+        deskewed_img = deskew(crop_img)
+        testImageProcess = preprocess_hog(deskewed_img)
+        resp = svm.predict(testImageProcess)
+        print resp[0]

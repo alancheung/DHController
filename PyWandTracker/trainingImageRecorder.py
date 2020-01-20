@@ -7,9 +7,9 @@ import argparse
 kernel = np.ones((5,5),np.uint8)
 pts = deque(maxlen=64)
 
-parser = argparse.ArgumentParser(description = 'Record training images for Pi Wand Tracker')
-parser.add_argument('path', type='string', help='File path to save images to')
-parser.add_argument()
+#parser = argparse.ArgumentParser(description = 'Record training images for Pi Wand Tracker')
+#parser.add_argument('path', type='string', help='File path to save images to')
+#parser.add_argument()
 
 # initialize camera and size window size as 640px by 480px
 camera = cv2.VideoCapture(0)
