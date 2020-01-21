@@ -1,3 +1,4 @@
+from __future__ import print_function
 import argparse
 from datetime import datetime
 import time
@@ -14,10 +15,7 @@ def processFrame(frame):
 
 def timestamp(text):
     curr_time = datetime.now().strftime("%A %d %B %Y %I:%M:%S%p")
-    print curr_time + ": " + text
-
-
-
+    print (curr_time + ": " + text)
 
 # Get arguments
 argParser = argparse.ArgumentParser()
