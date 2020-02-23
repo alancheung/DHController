@@ -11,11 +11,16 @@ argParser = argparse.ArgumentParser()
 argParser.add_argument("-a", "--min-area", type=int, default=500, help="minimum area size")
 argParser.add_argument("-r", "--refresh-time", type=int, default=30, help="amount time before static image refresh")
 argParser.add_argument("-t", "--threshold", type=int, default=50, help="amount of difference between images")
+argParser.add_argument('--interactive', dest='interactive', action='store_true', help="running on Pi hardware")
+argParser.add_argument('--remote', dest='interactive', action='store_false', help="running remotely")
+argParser.set_defaults(interactive=True)
 
 args = vars(argParser.parse_args())
 min_area = args["min_area"]
 refresh_time = args["refresh_time"]
 img_threshold = args["threshold"]
+interactive = args["interactive"]
+print(args)
 
 # ------------------------- DEFINE GLOBALS -------------------------
 firstFrame = None
@@ -30,9 +35,12 @@ def processFrame(frame):
     frame = cv2.GaussianBlur(frame, ksize=(21, 21), sigmaX=0)
     return frame
 
+# Print message to console with timestamp
 def timestamp(text):
     curr_time = datetime.now().strftime("%A %d %B %Y %I:%M:%S%p")
     print (curr_time + ": " + text)
+
+
 
 
 
@@ -84,10 +92,12 @@ while True:
     #            (0, 0, 255),
     #            1)
 
-    cv2.imshow('Feed', frame)
-    #cv2.imshow('Threshold', threshold)
-    #cv2.imshow('Delta', frameDelta)
-    #cv2.imshow('Static', firstFrame)
+    if (interactive):
+        cv2.imshow('Feed', frame)
+        #cv2.imshow('Threshold', threshold)
+        #cv2.imshow('Delta', frameDelta)
+        #cv2.imshow('Static', firstFrame)
+
     keyPressed = cv2.waitKey(1) & 0xFF
     if keyPressed == ord('q'): 
         break
