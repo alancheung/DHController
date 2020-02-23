@@ -44,11 +44,11 @@ def timestampDebug(text):
     curr_time = datetime.now().strftime("%A %d %B %Y %I:%M:%S%p")
     print (curr_time + ": " + text)
 
-def shouldUpdateStaticImage(updated_frame):
+def shouldUpdateStaticImage(updated_frame, now):
     if firstFrame is None:
         return True
     
-    lastUpdateDelta = datetime.now() - staticImgLastRefresh
+    lastUpdateDelta = now - staticImgLastRefresh
     if lastUpdateDelta.seconds >= refresh_time:
         return True
 
@@ -57,8 +57,8 @@ def shouldUpdateStaticImage(updated_frame):
 def getMotionStatusString(motionDelta, loopMotion):
     if loopMotion:
         return "Occupied"
-    elif lastMotionDelta.seconds >= motion_time:
-        return "Occupied (Stale: " + lastMotionDelta.seconds + ")"
+    elif lastMotionDelta.seconds <= motion_time:
+        return f"Occupied (Stale: {lastMotionDelta.seconds}seconds)"
     else:
         return "Unoccupied"
 
@@ -72,12 +72,13 @@ timestampDebug("Running...")
 
 # ------------------------- DEFINE RUN -------------------------
 while True:
+    loopStart = datetime.now()
     (okFrame, frame) = camera.read()
     p_frame = processFrame(frame)
 
-    if shouldUpdateStaticImage(p_frame):
+    if shouldUpdateStaticImage(p_frame, loopStart):
         timestampDebug("Static background updated!")
-        staticImgLastRefresh = datetime.now()
+        staticImgLastRefresh = loopStart
         firstFrame = p_frame
 
     frameDelta = cv2.absdiff(firstFrame, p_frame)
@@ -89,7 +90,7 @@ while True:
     contours = imutils.grab_contours(contours)
 
     # Check to see if motion has occurred
-    loopMotion = false
+    loopMotion = False
     for c in contours:
         # Motion detected but not triggered
         motionSize = cv2.contourArea(c)
@@ -100,13 +101,12 @@ while True:
         # motion dectected.
         timestampDebug('Detected motion!')
         loopMotion = True
-        lastMotionDetectionEvent = datetime.now()
+        lastMotionDetectionEvent = loopStart
         (x, y, w, h) = cv2.boundingRect(c)
         cv2.rectangle(frame, (x, y), (x + w, y + h), color=(0, 255, 0), thickness=2)
 
     # Update feed!
-    lastMotionDelta = datetime.now() - lastMotionDetectionEvent
-    
+    lastMotionDelta = loopStart - lastMotionDetectionEvent
     cv2.putText(frame, "Status: {}".format(getMotionStatusString(motionDelta=lastMotionDelta, loopMotion=loopMotion)), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
     if (interactive):
