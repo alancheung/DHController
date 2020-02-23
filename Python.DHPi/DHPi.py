@@ -11,8 +11,9 @@ import imutils
 # Get arguments
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-a", "--min-area", type=int, default=500, help="Minimum area size before motion detection")
-argParser.add_argument("-r", "--refresh-time", type=int, default=60, help="Amount time before static image refresh")
-argParser.add_argument("-t", "--threshold", type=int, default=50, help="Amount of difference between images")
+argParser.add_argument("-r", "--refresh-time", type=int, default=60, help="Amount of seconds before static image refresh")
+argParser.add_argument("-m", "--motion-time", type=int, default=300, help="Amount of seconds after last motion event to still be considered active")
+argParser.add_argument("-t", "--threshold", type=int, default=40, help="Amount of difference between images")
 argParser.add_argument('--show', dest='interactive', action='store_true', help="Display debugging windows")
 argParser.add_argument('--remote', dest='interactive', action='store_false', help="Disable Pi hardware specific functions")
 argParser.set_defaults(interactive=True)
@@ -22,12 +23,13 @@ min_area = args["min_area"]
 refresh_time = args["refresh_time"]
 img_threshold = args["threshold"]
 interactive = args["interactive"]
+motion_time = args["motion_time"]
 print(f"Args: {args}")
 
 # ------------------------- DEFINE GLOBALS -------------------------
 firstFrame = None
 staticImgLastRefresh = datetime.now()
-motionDetected = False
+lastMotionDetectionEvent = datetime.now()
 
 # ------------------------- DEFINE FUNCTIONS -------------------------
 # Process the initial image frame from the camera
@@ -52,6 +54,13 @@ def shouldUpdateStaticImage(updated_frame):
 
     return False
 
+def getMotionStatusString(motionDelta, loopMotion):
+    if loopMotion:
+        return "Occupied"
+    elif lastMotionDelta.seconds >= motion_time:
+        return "Occupied (Stale: " + lastMotionDelta.seconds + ")"
+    else:
+        return "Unoccupied"
 
 # ------------------------- DEFINE INITIALIZE -------------------------
 # Init camera with camera warmup
@@ -91,12 +100,14 @@ while True:
         # motion dectected.
         timestampDebug('Detected motion!')
         loopMotion = True
+        lastMotionDetectionEvent = datetime.now()
         (x, y, w, h) = cv2.boundingRect(c)
         cv2.rectangle(frame, (x, y), (x + w, y + h), color=(0, 255, 0), thickness=2)
-    motionDetected = loopMotion
 
     # Update feed!
-    cv2.putText(frame, "Status: {}".format("Occupied" if motionDetected else "Unoccupied"), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+    lastMotionDelta = datetime.now() - lastMotionDetectionEvent
+    
+    cv2.putText(frame, "Status: {}".format(getMotionStatusString(motionDelta=lastMotionDelta, loopMotion=loopMotion)), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
     if (interactive):
         cv2.imshow('Feed', frame)
