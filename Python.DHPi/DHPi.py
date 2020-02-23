@@ -1,5 +1,6 @@
 from __future__ import print_function
 from datetime import datetime
+from lifxlan import LifxLAN
 
 import argparse
 import time
@@ -10,7 +11,7 @@ import imutils
 # Get arguments
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-a", "--min-area", type=int, default=500, help="Minimum area size before motion detection")
-argParser.add_argument("-r", "--refresh-time", type=int, default=30, help="Amount time before static image refresh")
+argParser.add_argument("-r", "--refresh-time", type=int, default=60, help="Amount time before static image refresh")
 argParser.add_argument("-t", "--threshold", type=int, default=50, help="Amount of difference between images")
 argParser.add_argument('--show', dest='interactive', action='store_true', help="Display debugging windows")
 argParser.add_argument('--remote', dest='interactive', action='store_false', help="Disable Pi hardware specific functions")
@@ -26,7 +27,7 @@ print(f"Args: {args}")
 # ------------------------- DEFINE GLOBALS -------------------------
 firstFrame = None
 staticImgLastRefresh = datetime.now()
-
+motionDetected = False
 
 # ------------------------- DEFINE FUNCTIONS -------------------------
 # Process the initial image frame from the camera
@@ -41,13 +42,18 @@ def timestampDebug(text):
     curr_time = datetime.now().strftime("%A %d %B %Y %I:%M:%S%p")
     print (curr_time + ": " + text)
 
+def shouldUpdateStaticImage(updated_frame):
+    if firstFrame is None:
+        return True
+    
+    lastUpdateDelta = datetime.now() - staticImgLastRefresh
+    if lastUpdateDelta.seconds >= refresh_time:
+        return True
+
+    return False
 
 
-
-
-
-
-# ------------------------- DEFINE RUN -------------------------
+# ------------------------- DEFINE INITIALIZE -------------------------
 # Init camera with camera warmup
 timestampDebug("Initializing...")
 camera = cv2.VideoCapture(0)
@@ -55,12 +61,14 @@ time.sleep(2)
 timestampDebug("Initialized.")
 timestampDebug("Running...")
 
-# Run
+# ------------------------- DEFINE RUN -------------------------
 while True:
     (okFrame, frame) = camera.read()
     p_frame = processFrame(frame)
 
-    if firstFrame is None:
+    if shouldUpdateStaticImage(p_frame):
+        timestampDebug("Static background updated!")
+        staticImgLastRefresh = datetime.now()
         firstFrame = p_frame
 
     frameDelta = cv2.absdiff(firstFrame, p_frame)
@@ -71,8 +79,8 @@ while True:
     contours = cv2.findContours(threshold, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     contours = imutils.grab_contours(contours)
 
-    motionStatus = "Unoccupied"
     # Check to see if motion has occurred
+    loopMotion = false
     for c in contours:
         # Motion detected but not triggered
         motionSize = cv2.contourArea(c)
@@ -82,19 +90,13 @@ while True:
 
         # motion dectected.
         timestampDebug('Detected motion!')
-        motionStatus = "Occupied"
+        loopMotion = True
         (x, y, w, h) = cv2.boundingRect(c)
         cv2.rectangle(frame, (x, y), (x + w, y + h), color=(0, 255, 0), thickness=2)
+    motionDetected = loopMotion
 
     # Update feed!
-    cv2.putText(frame, "Status: {}".format(motionStatus), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-    #cv2.putText(frame, 
-    #            datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"), 
-    #            (10, frame.shape[0] - 10), 
-    #            cv2.FONT_HERSHEY_SIMPLEX,
-    #            0.35,
-    #            (0, 0, 255),
-    #            1)
+    cv2.putText(frame, "Status: {}".format("Occupied" if motionDetected else "Unoccupied"), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
     if (interactive):
         cv2.imshow('Feed', frame)
