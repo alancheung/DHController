@@ -6,6 +6,14 @@ import numpy as np
 import cv2
 import imutils
 
+# Get arguments
+argParser = argparse.ArgumentParser()
+argParser.add_argument("-a", "--min-area", type=int, default=500, help="minimum area size")
+argParser.add_argument("-r", "--refresh-time", type=int, default=30, help="time before static image refresh")
+args = vars(argParser.parse_args())
+
+
+# ------------------------- DEFINE FUNCTIONS -------------------------
 # Process the initial image frame from the camera
 def processFrame(frame):
     frame = imutils.resize(frame, width=500)
@@ -17,20 +25,19 @@ def timestamp(text):
     curr_time = datetime.now().strftime("%A %d %B %Y %I:%M:%S%p")
     print (curr_time + ": " + text)
 
-# Get arguments
-argParser = argparse.ArgumentParser()
-argParser.add_argument("-a", "--min-area", type=int, default=500, help="minimum area size")
-argParser.add_argument("-r", "--refresh-time", type=int, default=30, help="time before static image refresh")
-args = vars(argParser.parse_args())
 
+# ------------------------- DEFINE GLOBALS -------------------------
+firstFrame = None
+staticImgLastRefresh = datetime.now()
+
+
+
+# ------------------------- DEFINE RUN -------------------------
 # Init camera with camera warmup
 camera = cv2.VideoCapture(0)
 time.sleep(2)
 
-
-# ------------------------- DEFINE GLOBALS -------------------------
-firstFrame = None
-
+# Run
 while True:
     (okFrame, frame) = camera.read()
     p_frame = processFrame(frame)
