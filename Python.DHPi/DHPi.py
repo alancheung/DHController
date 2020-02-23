@@ -1,6 +1,7 @@
 from __future__ import print_function
-import argparse
 from datetime import datetime
+
+import argparse
 import time
 import numpy as np
 import cv2
@@ -20,7 +21,7 @@ min_area = args["min_area"]
 refresh_time = args["refresh_time"]
 img_threshold = args["threshold"]
 interactive = args["interactive"]
-print(args)
+print(f"Args: {args}")
 
 # ------------------------- DEFINE GLOBALS -------------------------
 firstFrame = None
