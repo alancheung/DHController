@@ -12,6 +12,10 @@ argParser.add_argument("-a", "--min-area", type=int, default=500, help="minimum 
 argParser.add_argument("-r", "--refresh-time", type=int, default=30, help="time before static image refresh")
 args = vars(argParser.parse_args())
 
+# ------------------------- DEFINE GLOBALS -------------------------
+firstFrame = None
+staticImgLastRefresh = datetime.now()
+
 
 # ------------------------- DEFINE FUNCTIONS -------------------------
 # Process the initial image frame from the camera
@@ -26,9 +30,6 @@ def timestamp(text):
     print (curr_time + ": " + text)
 
 
-# ------------------------- DEFINE GLOBALS -------------------------
-firstFrame = None
-staticImgLastRefresh = datetime.now()
 
 
 
