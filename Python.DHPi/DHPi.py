@@ -9,8 +9,13 @@ import imutils
 # Get arguments
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-a", "--min-area", type=int, default=500, help="minimum area size")
-argParser.add_argument("-r", "--refresh-time", type=int, default=30, help="time before static image refresh")
+argParser.add_argument("-r", "--refresh-time", type=int, default=30, help="amount time before static image refresh")
+argParser.add_argument("-t", "--threshold", type=int, default=50, help="amount of difference between images")
+
 args = vars(argParser.parse_args())
+min_area = args["min_area"]
+refresh_time = args["refresh_time"]
+img_threshold = args["threshold"]
 
 # ------------------------- DEFINE GLOBALS -------------------------
 firstFrame = None
@@ -47,7 +52,7 @@ while True:
         firstFrame = p_frame
 
     frameDelta = cv2.absdiff(firstFrame, p_frame)
-    threshold = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
+    threshold = cv2.threshold(frameDelta, img_threshold, 255, cv2.THRESH_BINARY)[1]
 
     # Dilate movement areas
     threshold = cv2.dilate(threshold, None, iterations=2)
@@ -59,7 +64,7 @@ while True:
     for c in contours:
         # Motion detected but not triggered
         motionSize = cv2.contourArea(c)
-        if motionSize < args["min_area"]:
+        if motionSize < min_area:
             #timestamp('Ignored motion with size (' + str(motionSize) + ')')
             continue
 
