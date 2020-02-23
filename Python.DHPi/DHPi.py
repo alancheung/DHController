@@ -9,11 +9,11 @@ import imutils
 
 # Get arguments
 argParser = argparse.ArgumentParser()
-argParser.add_argument("-a", "--min-area", type=int, default=500, help="minimum area size")
-argParser.add_argument("-r", "--refresh-time", type=int, default=30, help="amount time before static image refresh")
-argParser.add_argument("-t", "--threshold", type=int, default=50, help="amount of difference between images")
-argParser.add_argument('--interactive', dest='interactive', action='store_true', help="running on Pi hardware")
-argParser.add_argument('--remote', dest='interactive', action='store_false', help="running remotely")
+argParser.add_argument("-a", "--min-area", type=int, default=500, help="Minimum area size before motion detection")
+argParser.add_argument("-r", "--refresh-time", type=int, default=30, help="Amount time before static image refresh")
+argParser.add_argument("-t", "--threshold", type=int, default=50, help="Amount of difference between images")
+argParser.add_argument('--show', dest='interactive', action='store_true', help="Display debugging windows")
+argParser.add_argument('--remote', dest='interactive', action='store_false', help="Disable Pi hardware specific functions")
 argParser.set_defaults(interactive=True)
 
 args = vars(argParser.parse_args())
@@ -37,7 +37,7 @@ def processFrame(frame):
     return frame
 
 # Print message to console with timestamp
-def timestamp(text):
+def timestampDebug(text):
     curr_time = datetime.now().strftime("%A %d %B %Y %I:%M:%S%p")
     print (curr_time + ": " + text)
 
@@ -49,8 +49,11 @@ def timestamp(text):
 
 # ------------------------- DEFINE RUN -------------------------
 # Init camera with camera warmup
+timestampDebug("Initializing...")
 camera = cv2.VideoCapture(0)
 time.sleep(2)
+timestampDebug("Initialized.")
+timestampDebug("Running...")
 
 # Run
 while True:
@@ -78,7 +81,7 @@ while True:
             continue
 
         # motion dectected.
-        timestamp('Detected motion!')
+        timestampDebug('Detected motion!')
         motionStatus = "Occupied"
         (x, y, w, h) = cv2.boundingRect(c)
         cv2.rectangle(frame, (x, y), (x + w, y + h), color=(0, 255, 0), thickness=2)
