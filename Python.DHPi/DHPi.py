@@ -1,7 +1,9 @@
 from __future__ import print_function
 from datetime import datetime
 from lifxlan import LifxLAN
+from enum import Enum
 
+import sys
 import argparse
 import time
 import numpy as np
@@ -17,6 +19,8 @@ argParser.add_argument("-t", "--threshold", type=int, default=40, help="Amount o
 argParser.add_argument('--show', dest='interactive', action='store_true', help="Display debugging windows")
 argParser.add_argument('--remote', dest='interactive', action='store_false', help="Disable Pi hardware specific functions")
 argParser.set_defaults(interactive=True)
+argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
+argParser.set_defaults(quiet=False)
 
 args = vars(argParser.parse_args())
 min_area = args["min_area"]
@@ -24,12 +28,19 @@ refresh_time = args["refresh_time"]
 img_threshold = args["threshold"]
 interactive = args["interactive"]
 motion_time = args["motion_time"]
+quiet = args["quiet"]
 print(f"Args: {args}")
 
 # ------------------------- DEFINE GLOBALS -------------------------
 firstFrame = None
 staticImgLastRefresh = datetime.now()
 lastMotionDetectionEvent = datetime.now()
+lastLightOffEvent = None
+officeLightGroup = None
+officeLights = None
+lifx = None
+ProgramState = Enum("ProgramState", "on off stale")
+lastState = ProgramState.off
 
 # ------------------------- DEFINE FUNCTIONS -------------------------
 # Process the initial image frame from the camera
@@ -41,32 +52,41 @@ def processFrame(frame):
 
 # Print message to console with timestamp
 def timestampDebug(text):
-    curr_time = datetime.now().strftime("%A %d %B %Y %I:%M:%S%p")
-    print (curr_time + ": " + text)
+    if not quiet:
+        curr_time = datetime.now().strftime("%A %d %B %Y %I:%M:%S%p")
+        print (curr_time + ": " + text)
 
-def shouldUpdateStaticImage(updated_frame, now):
+def shouldUpdateStaticImage(now):
     if firstFrame is None:
+        timestampDebug("Background reset")
         return True
     
     lastUpdateDelta = now - staticImgLastRefresh
     if lastUpdateDelta.seconds >= refresh_time:
+        timestampDebug("Background refresh limit reached")
         return True
 
     return False
-
-def getMotionStatusString(motionDelta, loopMotion):
-    if loopMotion:
-        return "Occupied"
-    elif lastMotionDelta.seconds <= motion_time:
-        return f"Occupied (Stale: {lastMotionDelta.seconds}seconds)"
-    else:
-        return "Unoccupied"
 
 # ------------------------- DEFINE INITIALIZE -------------------------
 # Init camera with camera warmup
 timestampDebug("Initializing...")
 camera = cv2.VideoCapture(0)
-time.sleep(2)
+
+lifx = LifxLAN(7)
+officeLightGroup = lifx.get_devices_by_group("Office")
+officeLights = officeLightGroup.get_device_list()
+
+if len(officeLights) < 3:
+    timestampDebug(f"Did not discover all office lights! ({len(officeLights)} of 3)")
+    for d in officeLights:
+        try:
+            print(d)
+        except:
+            pass
+    sys.exit(-1)
+
+officeLightGroup.set_power("on", rapid=True)
 timestampDebug("Initialized.")
 timestampDebug("Running...")
 
@@ -76,10 +96,21 @@ while True:
     (okFrame, frame) = camera.read()
     p_frame = processFrame(frame)
 
-    if shouldUpdateStaticImage(p_frame, loopStart):
-        timestampDebug("Static background updated!")
+    if shouldUpdateStaticImage(loopStart):
         staticImgLastRefresh = loopStart
         firstFrame = p_frame
+        continue
+
+    # Deal with background updates
+    if lastLightOffEvent is not None:
+        lightOffDelta = loopStart - lastLightOffEvent
+        if lightOffDelta.seconds <= refresh_time:
+            timestampDebug(f"Clearing buffer after power off - {refresh_time - lightOffDelta.seconds} seconds remaining")
+            continue
+        else:
+            timestampDebug("Listening to changes again")
+            lastLightOffEvent = None
+
 
     frameDelta = cv2.absdiff(firstFrame, p_frame)
     threshold = cv2.threshold(frameDelta, img_threshold, 255, cv2.THRESH_BINARY)[1]
@@ -97,23 +128,45 @@ while True:
         if motionSize < min_area:
             #timestamp('Ignored motion with size (' + str(motionSize) + ')')
             continue
-
-        # motion dectected.
-        timestampDebug('Detected motion!')
-        loopMotion = True
-        lastMotionDetectionEvent = loopStart
-        (x, y, w, h) = cv2.boundingRect(c)
-        cv2.rectangle(frame, (x, y), (x + w, y + h), color=(0, 255, 0), thickness=2)
+        else:
+            # motion dectected.
+            loopMotion = True
+            lastMotionDetectionEvent = loopStart
+            (x, y, w, h) = cv2.boundingRect(c)
+            cv2.rectangle(frame, (x, y), (x + w, y + h), color=(0, 255, 0), thickness=2)
 
     # Update feed!
+    motionStatus = ""
     lastMotionDelta = loopStart - lastMotionDetectionEvent
-    cv2.putText(frame, "Status: {}".format(getMotionStatusString(motionDelta=lastMotionDelta, loopMotion=loopMotion)), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+    if loopMotion and lastState == ProgramState.off:
+        timestampDebug("Motion detected! Powering lights on...")
+        officeLightGroup.set_power("on", rapid=True)
+        lastState = ProgramState.on
+        motionStatus =  "Occupied"
+        lastLightOffEvent = None
+    elif lastMotionDelta.seconds <= motion_time:
+        # do nothing, motion is stale
+        timestampDebug(f"Motion stale for {lastMotionDelta.seconds}secounds")
+        lastState = ProgramState.stale
+        motionStatus =  f"Occupied (Stale: {lastMotionDelta.seconds}seconds)"
+        lastLightOffEvent = None
+    elif lastMotionDelta.seconds > motion_time and lastState != ProgramState.off:
+        timestampDebug(f"No motion detected. Turning off lights")
+        
+        # wait for lights to full turn off then update
+        officeLightGroup.set_power("off", rapid=True)
+        firstFrame = None
+        lastMotionDelta = loopStart
+        lastState = ProgramState.off
+        motionStatus =  "Unoccupied"
+        lastLightOffEvent = loopStart
 
+    cv2.putText(frame, "Status: {}".format(motionStatus), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
     if (interactive):
         cv2.imshow('Feed', frame)
+        if firstFrame is not None: cv2.imshow('Static', firstFrame)
         #cv2.imshow('Threshold', threshold)
         #cv2.imshow('Delta', frameDelta)
-        #cv2.imshow('Static', firstFrame)
 
     keyPressed = cv2.waitKey(1) & 0xFF
     if keyPressed == ord('q'): 
