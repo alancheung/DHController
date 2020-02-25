@@ -118,7 +118,7 @@ while True:
             timestampDebug(f"Clearing buffer after power off - {refresh_time - lightOffDelta.seconds} seconds remaining")
             continue
         else:
-            timestampDebug("Listening to changes again")
+            timestampDebug("Listening to changes again", displayWhenQuiet=True)
             lastLightOffEvent = None
 
 
@@ -162,7 +162,7 @@ while True:
         motionStatus =  f"Occupied (Stale: {lastMotionDelta.seconds}seconds)"
         lastLightOffEvent = None
     elif lastMotionDelta.seconds > motion_time and lastState != ProgramState.off:
-        timestampDebug(f"No motion detected.")
+        timestampDebug(f"No motion detected.", displayWhenQuiet=True)
         
         # wait for lights to full turn off then update
         #officeLightGroup.set_power("off", rapid=True)
