@@ -114,7 +114,7 @@ while True:
     # Deal with background updates
     if lastLightOffEvent is not None:
         lightOffDelta = loopStart - lastLightOffEvent
-        if lightOffDelta.seconds <= refresh_time:
+        if lightOffDelta.seconds <= 15:
             timestampDebug(f"Clearing buffer after power off - {refresh_time - lightOffDelta.seconds} seconds remaining")
             continue
         else:
