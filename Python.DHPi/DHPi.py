@@ -41,6 +41,7 @@ officeLights = None
 lifx = None
 ProgramState = Enum("ProgramState", "on off stale")
 lastState = ProgramState.off
+imgCount = 1
 
 # ------------------------- DEFINE FUNCTIONS -------------------------
 # Process the initial image frame from the camera
@@ -51,8 +52,8 @@ def processFrame(frame):
     return frame
 
 # Print message to console with timestamp
-def timestampDebug(text):
-    if not quiet:
+def timestampDebug(text, displayWhenQuiet = False):
+    if displayWhenQuiet or not quiet:
         curr_time = datetime.now().strftime("%A %d %B %Y %I:%M:%S%p")
         print (curr_time + ": " + text)
 
@@ -67,6 +68,13 @@ def shouldUpdateStaticImage(now):
         return True
 
     return False
+
+def saveMotionImage(frame):
+    global imgCount
+    curr_time = datetime.now().strftime("%A %d %B %Y %I:%M:%S%p")
+    filePath = '/home/pi/Desktop/DHPi/MotionImages/' + curr_time + '-' + str(imgCount) + '.png'
+    cv2.imwrite(filePath, frame)
+    imgCount+=1
 
 # ------------------------- DEFINE INITIALIZE -------------------------
 # Init camera with camera warmup
@@ -94,6 +102,8 @@ timestampDebug("Running...")
 while True:
     loopStart = datetime.now()
     (okFrame, frame) = camera.read()
+    frame = imutils.resize(frame, width=600, height=600)
+    frame = imutils.rotate(frame, angle=270)
     p_frame = processFrame(frame)
 
     if shouldUpdateStaticImage(loopStart):
@@ -136,14 +146,15 @@ while True:
             cv2.rectangle(frame, (x, y), (x + w, y + h), color=(0, 255, 0), thickness=2)
 
     # Update feed!
-    motionStatus = ""
+    motionStatus = "Unoccupied"
     lastMotionDelta = loopStart - lastMotionDetectionEvent
     if loopMotion and lastState == ProgramState.off:
-        timestampDebug("Motion detected! Powering lights on...")
+        timestampDebug("Motion detected! Powering lights on...", displayWhenQuiet=True)
         officeLightGroup.set_power("on", rapid=True)
         lastState = ProgramState.on
         motionStatus =  "Occupied"
         lastLightOffEvent = None
+        saveMotionImage(frame)
     elif lastMotionDelta.seconds <= motion_time:
         # do nothing, motion is stale
         timestampDebug(f"Motion stale for {lastMotionDelta.seconds}secounds")
@@ -151,7 +162,7 @@ while True:
         motionStatus =  f"Occupied (Stale: {lastMotionDelta.seconds}seconds)"
         lastLightOffEvent = None
     elif lastMotionDelta.seconds > motion_time and lastState != ProgramState.off:
-        timestampDebug(f"No motion detected. Turning off lights")
+        timestampDebug(f"No motion detected.")
         
         # wait for lights to full turn off then update
         officeLightGroup.set_power("off", rapid=True)
