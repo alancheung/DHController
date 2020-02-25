@@ -165,7 +165,7 @@ while True:
         timestampDebug(f"No motion detected.")
         
         # wait for lights to full turn off then update
-        officeLightGroup.set_power("off", rapid=True)
+        #officeLightGroup.set_power("off", rapid=True)
         firstFrame = None
         lastMotionDelta = loopStart
         lastState = ProgramState.off
