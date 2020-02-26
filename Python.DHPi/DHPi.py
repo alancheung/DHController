@@ -87,11 +87,6 @@ officeLights = officeLightGroup.get_device_list()
 
 if len(officeLights) < 3:
     timestampDebug(f"Did not discover all office lights! ({len(officeLights)} of 3)")
-    for d in officeLights:
-        try:
-            print(d)
-        except:
-            pass
     sys.exit(-1)
 
 officeLightGroup.set_power("on", rapid=True)
@@ -151,6 +146,7 @@ while True:
     if loopMotion and lastState == ProgramState.off:
         timestampDebug("Motion detected! Powering lights on...", displayWhenQuiet=True)
         officeLightGroup.set_power("on", rapid=True)
+
         lastState = ProgramState.on
         motionStatus =  "Occupied"
         lastLightOffEvent = None
@@ -158,6 +154,7 @@ while True:
     elif lastMotionDelta.seconds <= motion_time:
         # do nothing, motion is stale
         timestampDebug(f"Motion stale for {lastMotionDelta.seconds}secounds")
+
         lastState = ProgramState.stale
         motionStatus =  f"Occupied (Stale: {lastMotionDelta.seconds}seconds)"
         lastLightOffEvent = None
@@ -166,11 +163,10 @@ while True:
         
         # wait for lights to full turn off then update
         #officeLightGroup.set_power("off", rapid=True)
-        firstFrame = None
-        lastMotionDelta = loopStart
+        #firstFrame = None
         lastState = ProgramState.off
         motionStatus =  "Unoccupied"
-        lastLightOffEvent = loopStart
+        #lastLightOffEvent = loopStart
 
     cv2.putText(frame, "Status: {}".format(motionStatus), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
     if (interactive):
