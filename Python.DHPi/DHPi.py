@@ -15,7 +15,7 @@ argParser = argparse.ArgumentParser()
 argParser.add_argument("-a", "--min-area", type=int, default=500, help="Minimum area size before motion detection")
 argParser.add_argument("-r", "--refresh-time", type=int, default=60, help="Amount of seconds before static image refresh")
 argParser.add_argument("-m", "--motion-time", type=int, default=300, help="Amount of seconds after last motion event to still be considered active")
-argParser.add_argument("-t", "--threshold", type=int, default=40, help="Amount of difference between images")
+argParser.add_argument("-t", "--threshold", type=int, default=30, help="Amount of difference between images")
 argParser.add_argument('--show', dest='interactive', action='store_true', help="Display debugging windows")
 argParser.add_argument('--remote', dest='interactive', action='store_false', help="Disable Pi hardware specific functions")
 argParser.set_defaults(interactive=True)
@@ -172,7 +172,7 @@ while True:
     if (interactive):
         cv2.imshow('Feed', frame)
         if firstFrame is not None: cv2.imshow('Static', firstFrame)
-        #cv2.imshow('Threshold', threshold)
+        cv2.imshow('Threshold', threshold)
         #cv2.imshow('Delta', frameDelta)
 
     keyPressed = cv2.waitKey(1) & 0xFF
