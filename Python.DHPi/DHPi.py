@@ -89,7 +89,7 @@ if len(officeLights) < 3:
     timestampDebug(f"Did not discover all office lights! ({len(officeLights)} of 3)")
     sys.exit(-1)
 
-officeLightGroup.set_power("on", duration=5000)
+officeLightGroup.set_power("on", rapid=True)
 timestampDebug("Initialized.")
 timestampDebug("Running...")
 
