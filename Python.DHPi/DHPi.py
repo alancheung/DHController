@@ -106,7 +106,7 @@ while True:
     if lastLightOffEvent is not None:
         lightOffDelta = loopStart - lastLightOffEvent
         if lightOffDelta.seconds <= 15:
-            timestampDebug(f"Clearing buffer after power off - {refresh_time - lightOffDelta.seconds} seconds remaining")
+            timestampDebug(f"Clearing buffer after power off - {15 - lightOffDelta.seconds} seconds remaining")
             continue
         else:
             timestampDebug("Listening to changes again", displayWhenQuiet=True)
