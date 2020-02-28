@@ -101,10 +101,6 @@ while True:
     frame = imutils.rotate(frame, angle=270)
     p_frame = processFrame(frame)
 
-    if shouldUpdateStaticImage(loopStart):
-        staticImgLastRefresh = loopStart
-        firstFrame = p_frame
-        continue
 
     # Deal with background updates
     if lastLightOffEvent is not None:
@@ -115,7 +111,12 @@ while True:
         else:
             timestampDebug("Listening to changes again", displayWhenQuiet=True)
             lastLightOffEvent = None
+            firstFrame = None
 
+    if shouldUpdateStaticImage(loopStart):
+        staticImgLastRefresh = loopStart
+        firstFrame = p_frame
+        continue
 
     frameDelta = cv2.absdiff(firstFrame, p_frame)
     threshold = cv2.threshold(frameDelta, img_threshold, 255, cv2.THRESH_BINARY)[1]
@@ -162,11 +163,11 @@ while True:
         timestampDebug(f"No motion detected.", displayWhenQuiet=True)
         
         # wait for lights to full turn off then update
-        #officeLightGroup.set_power("off", rapid=True)
-        #firstFrame = None
+        officeLightGroup.set_power("off", rapid=True)
+        firstFrame = None
         lastState = ProgramState.off
         motionStatus =  "Unoccupied"
-        #lastLightOffEvent = loopStart
+        lastLightOffEvent = loopStart
 
     cv2.putText(frame, "Status: {}".format(motionStatus), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
     if (interactive):
