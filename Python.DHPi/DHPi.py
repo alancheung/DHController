@@ -97,7 +97,7 @@ timestampDebug("Running...")
 while True:
     loopStart = datetime.now()
     (okFrame, frame) = camera.read()
-    frame = imutils.resize(frame, width=600, height=600)
+    frame = imutils.resize(frame, width=480, height=480)
     frame = imutils.rotate(frame, angle=270)
     p_frame = processFrame(frame)
 
