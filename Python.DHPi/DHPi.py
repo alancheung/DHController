@@ -16,7 +16,7 @@ argParser.add_argument("-a", "--min-area", type=int, default=500, help="Minimum 
 argParser.add_argument("-r", "--refresh-time", type=int, default=60, help="Amount of seconds before static image refresh")
 argParser.add_argument("-m", "--motion-time", type=int, default=300, help="Amount of seconds after last motion event to still be considered active")
 argParser.add_argument("-t", "--threshold", type=int, default=30, help="Amount of difference between images")
-argParser.add_argument('--show', dest='interactive', action='store_true', help="Display debugging windows")
+argParser.add_argument('--ononly', dest='ononly', action='store_true', help="Disable turning lights off command")
 argParser.add_argument('--remote', dest='interactive', action='store_false', help="Disable Pi hardware specific functions")
 argParser.set_defaults(interactive=True)
 argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
@@ -29,6 +29,7 @@ img_threshold = args["threshold"]
 interactive = args["interactive"]
 motion_time = args["motion_time"]
 quiet = args["quiet"]
+ononly = args["ononly"]
 print(f"Args: {args}")
 
 # ------------------------- DEFINE GLOBALS -------------------------
@@ -161,13 +162,14 @@ while True:
         lastLightOffEvent = None
     elif lastMotionDelta.seconds > motion_time and lastState != ProgramState.off:
         timestampDebug(f"No motion detected.", displayWhenQuiet=True)
-        
-        # wait for lights to full turn off then update
-        officeLightGroup.set_power("off", rapid=True)
         firstFrame = None
         lastState = ProgramState.off
         motionStatus =  "Unoccupied"
-        lastLightOffEvent = loopStart
+        
+        # wait for lights to full turn off then update
+        if not ononly:
+            officeLightGroup.set_power("off", rapid=True)
+            lastLightOffEvent = loopStart
 
     cv2.putText(frame, "Status: {}".format(motionStatus), (10, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
     if (interactive):
