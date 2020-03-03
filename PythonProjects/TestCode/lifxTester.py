@@ -8,6 +8,7 @@ officeLights = officeLightGroup.get_device_list()
 officeOne = next(filter(lambda l: l.get_label() == "Office One", officeLights), None)
 officeTwo = next(filter(lambda l: l.get_label() == "Office Two", officeLights), None)
 officeThree = next(filter(lambda l: l.get_label() == "Office Three", officeLights), None)
+
 def lightOnSequence():
     print("One on!")
     officeOne.set_power("on", duration=5000)
@@ -20,16 +21,7 @@ def lightOnSequence():
     sleep(1)
 
 
-
-
 if len(officeLights) < 3:
     print(f"Did not discover all office lights! ({len(officeLights)} of 3)")
     sys.exit(-1)
 
-print("Turning lights off..")
-officeLightGroup.set_power("off", duration=2000)
-print("Command sent, sleeping...")
-sleep(2)
-print("Woke up")
-lightOnSequence()
-print("Done!")
