@@ -31,7 +31,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csp
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DHClient", "DHClient\DHClient.csproj", "{4C2F3109-58FC-47A3-B41C-A9A95F042AB7}"
 EndProject
-Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Python.DHPi", "Python.DHPi\Python.DHPi.pyproj", "{204F2E39-2008-4F4B-9012-C80EB5D39EF4}"
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PythonProjects", "Python.DHPi\PythonProjects.pyproj", "{204F2E39-2008-4F4B-9012-C80EB5D39EF4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
