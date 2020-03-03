@@ -43,7 +43,7 @@ def createTrainingImgName(shape, count):
     return shape + '-' + str(count) + '.png'
 
 # Resize arg(image) with height and width = arg((height,width)) to scale = arg(scale)
-def resizeImage(image, (height, width), scale):
+def resizeImage(image, height, width, scale):
     h = height * scale / 100
     w = width * scale / 100
     dim = (w, h)
@@ -116,9 +116,9 @@ for i in range(30, 100):
         readImages.append(deskewed_img)
 
 processImages = preprocess_hog(readImages)
-print 'shape1 count ' + str(shape1Count)
-print 'line ' + str(lineCount)
-print processImages.shape
+print('shape1 count ' + str(shape1Count))
+print('line ' + str(lineCount))
+print(processImages.shape)
 
 # TODO figure out how to make this dynamic
 # for now hardcode
@@ -134,34 +134,34 @@ labels = np.mat([1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
                  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
                  2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 
                  2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
-print labels
+print(labels)
 
 svm = SVM(C = 2.67, gamma = 5.383)
 svm.train(processImages, labels)
 
 
-print 'Test Image 1'
+print('Test Image 1')
 for i in range(1, 500):
     fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName('shape1', i)
     if path.exists(fullPath):
-        print fullPath
+        print(fullPath)
         testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
         crop_img = cropImage(testImage)
         deskewed_img = deskew(crop_img)
         testImageProcess = preprocess_hog(deskewed_img)
         resp = svm.predict(testImageProcess)
-        print resp[0]
+        print(resp[0])
 
 
 
-print 'Test Image 2'
+print('Test Image 2')
 for i in range(1, 500):
     fullPath = trainingDirPath + 'HorizontalLine/shape2-' + str(i) + '.png'
     if path.exists(fullPath):
-        print fullPath
+        print(fullPath)
         testImage = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
         crop_img = cropImage(testImage)
         deskewed_img = deskew(crop_img)
         testImageProcess = preprocess_hog(deskewed_img)
         resp = svm.predict(testImageProcess)
-        print resp[0]
+        print(resp[0])

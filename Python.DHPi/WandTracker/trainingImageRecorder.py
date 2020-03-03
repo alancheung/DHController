@@ -74,7 +74,7 @@ while 1:
     numPointsTracked = sum(1 for p in pts if p is not None)
     if numPointsTracked == len(pts):
         filePath = '/home/pi/Desktop/WandTraining/Shapes/HorizontalLine/' + 'shape2-' + str(imgCount) + '.png'
-        print filePath
+        print(filePath)
         cv2.imwrite(filePath, frame_gray)
         imgCount+=1
 
@@ -90,10 +90,10 @@ while 1:
     # increase threshold if 't' is pressed, decrease for 'g'
     elif keyPressed == ord('t'):
         thresh = thresh + 10
-        print 'Threshold:' + str(thresh)
+        print('Threshold:' + str(thresh))
     elif keyPressed == ord('g'):
         thresh = thresh - 10
-        print 'Threshold:' + str(thresh)
+        print('Threshold:' + str(thresh))
 
     
 # cleanup the camera and close any open windows

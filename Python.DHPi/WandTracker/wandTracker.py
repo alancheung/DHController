@@ -72,7 +72,7 @@ while 1:
     drawTrackingLine(frame_gray)
     numPointsTracked = sum(1 for p in pts if p is not None)
     if numPointsTracked >= (len(pts) / 2):
-        print 'Shape is probable!' + str(numPointsTracked)
+        print('Shape is probable!' + str(numPointsTracked))
 
         ## Get minimum image to verify
         #fullCnts = cv2.findContours(frame_gray, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[-2]
@@ -82,7 +82,7 @@ while 1:
         #cv2.circle(frame_gray, (int(x), int(y)), int(radius), (0, 255, 255), 2)
 
         spell = detectSpell()
-        print spell
+        print(spell)
 
     # loop and show frame
     cv2.imshow('raw', frame)
@@ -93,10 +93,10 @@ while 1:
     # increase threshold if 't' is pressed, decrease for 'g'
     elif keyPressed == ord('t'):
         thresh = thresh + 10
-        print 'Threshold:' + str(thresh)
+        print('Threshold:' + str(thresh))
     elif keyPressed == ord('g'):
         thresh = thresh - 10
-        print 'Threshold:' + str(thresh)
+        print('Threshold:' + str(thresh))
 
     
 # cleanup the camera and close any open windows

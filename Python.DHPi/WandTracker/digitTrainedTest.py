@@ -72,16 +72,16 @@ svm.load(datFile)
 for i in range(1, 10):
     fullPath = trainingDirPath + trainingShapeDirPath + createTrainingImgName(i)
     if path.exists(fullPath):
-        print fullPath
+        print(fullPath)
         image = cv2.imread(fullPath, cv2.IMREAD_GRAYSCALE)
         process = preprocess_hog(image)
 
-        print process
-        print process.shape
+        print(process)
+        print(process.shape)
 
         process = np.asmatrix(process)
         process = np.float32(process)
-        print svm.predict(process)
+        print(svm.predict(process))
 
         #h, w = image.shape[:2]
         #image = resizeImage(image, (h,w), 40)
