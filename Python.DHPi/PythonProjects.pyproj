@@ -35,6 +35,9 @@
     <Compile Include="WandTracker\trainingImageRecorder.py" />
     <Compile Include="WandTracker\trainSvm.py" />
     <Compile Include="WandTracker\wandTracker.py" />
+    <Compile Include="WandTracker\WandTracker.Simple\Tracker.py">
+      <SubType>Code</SubType>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Interpreter Include="env\">
@@ -59,6 +62,7 @@
   <ItemGroup>
     <Folder Include="Common\" />
     <Folder Include="MotionCamera\" />
+    <Folder Include="WandTracker\WandTracker.Simple\" />
     <Folder Include="TestCode\" />
     <Folder Include="WandTracker\" />
     <Folder Include="WandTracker\Shapes\" />
