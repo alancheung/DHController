@@ -77,6 +77,13 @@ def saveMotionImage(frame):
     cv2.imwrite(filePath, frame)
     imgCount+=1
 
+def lightOnSequence():
+    officeOne.set_power("on", duration=5000)
+    sleep(1)
+    officeTwo.set_power("on", duration=4000)
+    sleep(1)
+    officeThree.set_power("on", duration=3000)
+
 # ------------------------- DEFINE INITIALIZE -------------------------
 # Init camera with camera warmup
 timestampDebug("Initializing...")
@@ -90,7 +97,11 @@ if len(officeLights) < 3:
     timestampDebug(f"Did not discover all office lights! ({len(officeLights)} of 3)")
     sys.exit(-1)
 
+officeOne = next(filter(lambda l: l.get_label() == "Office One", officeLights), None)
+officeTwo = next(filter(lambda l: l.get_label() == "Office Two", officeLights), None)
+officeThree = next(filter(lambda l: l.get_label() == "Office Three", officeLights), None)
 officeLightGroup.set_power("on", rapid=True)
+
 timestampDebug("Initialized.")
 timestampDebug("Running...")
 
@@ -147,7 +158,7 @@ while True:
     lastMotionDelta = loopStart - lastMotionDetectionEvent
     if loopMotion and lastState == ProgramState.off:
         timestampDebug("Motion detected! Powering lights on...", displayWhenQuiet=True)
-        officeLightGroup.set_power("on", duration=5000, rapid=True)
+        lightOnSequence()
 
         lastState = ProgramState.on
         motionStatus =  "Occupied"
