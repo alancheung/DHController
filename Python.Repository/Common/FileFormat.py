@@ -34,4 +34,4 @@ log("Running...", displayWhenQuiet = True)
 try:
     print("Run")
 except KeyboardInterrupt:
-    print("KeyboardInterrupt caught! Cleaning up...", displayWhenQuiet = True)
+    print("KeyboardInterrupt caught! Cleaning up...")

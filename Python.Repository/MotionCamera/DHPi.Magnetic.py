@@ -136,6 +136,6 @@ try:
             else:
                 handleClose()
 except KeyboardInterrupt:
-    print("KeyboardInterrupt caught! Cleaning up...", displayWhenQuiet = True)
+    print("KeyboardInterrupt caught! Cleaning up...")
     GPIO.cleanup()
     print("GPIO.cleanup() called!")
