@@ -11,6 +11,7 @@ import argparse
 
 argParser = argparse.ArgumentParser()
 argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
+argParser.set_defaults(quiet=False)
 
 args = vars(argParser.parse_args())
 
