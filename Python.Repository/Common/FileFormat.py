@@ -14,22 +14,24 @@ argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disab
 argParser.set_defaults(quiet=False)
 
 args = vars(argParser.parse_args())
-
 quiet = args["quiet"]
 print(f"Args: {args}")
 
 # ------------------------- DEFINE GLOBALS ---------------------------
 
 # ------------------------- DEFINE FUNCTIONS -------------------------
-def logTimestamp(text, displayWhenQuiet = False):
+def log(text, displayWhenQuiet = False):
     if displayWhenQuiet or not quiet:
         now = datetime.now().strftime("%H:%M:%S")
         print(f"{now}: {text}")
 
 # ------------------------- DEFINE INITIALIZE ------------------------
+log("Initializing...", displayWhenQuiet = True)
 
 # ------------------------- DEFINE RUN -------------------------------
+log("Initialized!", displayWhenQuiet = True)
+log("Running...", displayWhenQuiet = True)
 try:
     print("Run")
 except KeyboardInterrupt:
-    print("KeyboardInterrupt caught! Cleaning up...")
+    print("KeyboardInterrupt caught! Cleaning up...", displayWhenQuiet = True)
