@@ -1,5 +1,6 @@
 # ------------------------- DEFINE IMPORTS ---------------------------
 from __future__ import print_function
+from datetime import datetime
 import argparse
 
 # ------------------------- DEFINE ARGUMENTS -------------------------
@@ -15,6 +16,10 @@ print(f"Args: {args}")
 # ------------------------- DEFINE GLOBALS ---------------------------
 
 # ------------------------- DEFINE FUNCTIONS -------------------------
+def timestampDebug(text, displayWhenQuiet = False):
+    if displayWhenQuiet or not quiet:
+        curr_time = datetime.now().strftime("%A %d %B %Y %I:%M:%S%p")
+        print (curr_time + ": " + text)
 
 # ------------------------- DEFINE INITIALIZE ------------------------
 
