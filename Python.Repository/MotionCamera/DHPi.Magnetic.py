@@ -18,12 +18,14 @@ except RuntimeError:
 
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-p", "--pin-sensor", type=int, default=37, help="Board GPIO pin that sensor is connected to.")
+argParser.add_argument("-o", "--open-time", type=int, default=3000, help="Number of seconds since door open event to ignore lights off.")
 argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
 
 argParser.set_defaults(quiet=False)
 
 args = vars(argParser.parse_args())
 sensorPin = args["pin_sensor"]
+openTime = args["open_time"]
 quiet = args["quiet"]
 print(f"Args: {args}")
 # ------------------------- DEFINE GLOBALS ---------------------------
@@ -84,7 +86,7 @@ def handleClose():
         log("CLOSE event received, but no corresponding OPEN event!", True)
     else:
         timeSinceOpen = now - lastOpen
-        if timeSinceOpen.seconds > 5: 
+        if timeSinceOpen.seconds > openTime: 
             # Some time has passed since the door opened, turn off lights
             log(f"{timeSinceOpen.seconds}s has passed from last door open. Turn off lights!", True)
             lightOffSequence()
