@@ -111,7 +111,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\ConsoleLogger.py" />
+    <Compile Include="Common\FileFormat.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Common\__init__.py" />
+    <Compile Include="MotionCamera\DHPi.Magnetic.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="MotionCamera\DHPi.py" />
     <Compile Include="TestCode\lifxTester.py" />
     <Compile Include="TestCode\MagneticSensor\magneticSensor.py">
