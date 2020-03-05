@@ -1,15 +1,6 @@
 # ------------------------- DEFINE IMPORTS ---------------------------
 from __future__ import print_function
-from datetime import datetime
-from lifxlan import LifxLAN
-from enum import Enum
-
-import sys
 import argparse
-import time
-import numpy as np
-import cv2
-import imutils
 
 # ------------------------- DEFINE ARGUMENTS -------------------------
 # argParser.add_argument("-a", "--min-area", type=int, default=500, help="Minimum area size before motion detection")
