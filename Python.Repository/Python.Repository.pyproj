@@ -27,6 +27,7 @@
     <Folder Include="MotionCamera\" />
     <Folder Include="MotionImages\" />
     <Folder Include="TestCode\" />
+    <Folder Include="TestCode\MagneticSensor\" />
     <Folder Include="WandTracker\" />
     <Folder Include="WandTracker\Shapes\" />
     <Folder Include="WandTracker\Shapes\circle\" />
@@ -113,6 +114,9 @@
     <Compile Include="Common\__init__.py" />
     <Compile Include="MotionCamera\DHPi.py" />
     <Compile Include="TestCode\lifxTester.py" />
+    <Compile Include="TestCode\MagneticSensor\magneticSensor.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="WandTracker\classificationTutorial.py" />
     <Compile Include="WandTracker\common.py" />
     <Compile Include="WandTracker\digitTrainedTest.py" />
