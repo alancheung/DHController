@@ -10,7 +10,11 @@ import argparse
 #argParser.set_defaults(interactive=True)
 
 argParser = argparse.ArgumentParser()
+argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
+
 args = vars(argParser.parse_args())
+
+quiet = args["quiet"]
 print(f"Args: {args}")
 
 # ------------------------- DEFINE GLOBALS ---------------------------
