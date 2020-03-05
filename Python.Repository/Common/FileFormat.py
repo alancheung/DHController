@@ -16,10 +16,10 @@ print(f"Args: {args}")
 # ------------------------- DEFINE GLOBALS ---------------------------
 
 # ------------------------- DEFINE FUNCTIONS -------------------------
-def timestampDebug(text, displayWhenQuiet = False):
+def logTimestamp(text, displayWhenQuiet = False):
     if displayWhenQuiet or not quiet:
-        curr_time = datetime.now().strftime("%A %d %B %Y %I:%M:%S%p")
-        print (curr_time + ": " + text)
+        now = datetime.now().strftime("%H:%M:%S")
+        print(f"{now}: {text}")
 
 # ------------------------- DEFINE INITIALIZE ------------------------
 
