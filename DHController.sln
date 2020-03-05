@@ -33,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DHClient", "DHClient\DHClie
 EndProject
 Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "PythonProjects", "Python.DHPi\PythonProjects.pyproj", "{204F2E39-2008-4F4B-9012-C80EB5D39EF4}"
 EndProject
+Project("{888888A0-9F3D-457C-B088-3A5042F75D52}") = "Python.Repository", "Python.Repository\Python.Repository.pyproj", "{93E664B9-1F3D-4A5B-92C0-A927527B5608}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -85,6 +87,8 @@ Global
 		{4C2F3109-58FC-47A3-B41C-A9A95F042AB7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{204F2E39-2008-4F4B-9012-C80EB5D39EF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{204F2E39-2008-4F4B-9012-C80EB5D39EF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93E664B9-1F3D-4A5B-92C0-A927527B5608}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93E664B9-1F3D-4A5B-92C0-A927527B5608}.Release|Any CPU.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
