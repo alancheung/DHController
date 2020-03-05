@@ -49,16 +49,16 @@ def log(text, displayWhenQuiet = False):
 def lightOnSequence():
     officeOne.set_power("on", duration=5000)
     sleep(1)
-    #officeTwo.set_power("on", duration=4000)
+    officeTwo.set_power("on", duration=4000)
     sleep(1)
     officeThree.set_power("on", duration=3000)
 
 def lightOffSequence():
-    officeOne.set_power("off", duration=5000)
+    officeThree.set_power("off", duration=5000)
     sleep(1)
     officeTwo.set_power("off", duration=4000)
     sleep(1)
-    officeThree.set_power("off", duration=3000)
+    officeOne.set_power("off", duration=3000)
 
 def handleOpen():
     log("Open:High")
@@ -104,7 +104,7 @@ officeLightGroup = lifx.get_devices_by_group("Office")
 officeLights = officeLightGroup.get_device_list()
 
 if len(officeLights) < 3:
-    timestampDebug(f"Did not discover all office lights! ({len(officeLights)} of 3)")
+    log(f"Did not discover all office lights! ({len(officeLights)} of 3)")
     sys.exit(-1)
 
 officeOne = next(filter(lambda l: l.get_label() == "Office One", officeLights), None)
