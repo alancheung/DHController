@@ -11,10 +11,12 @@ import argparse
 
 argParser = argparse.ArgumentParser()
 argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
+argParser.add_argument("-f", "--log-file", type=string, default=None, help="Specify file to log to.")
 argParser.set_defaults(quiet=False)
 
 args = vars(argParser.parse_args())
 quiet = args["quiet"]
+logFileName = args["log_file"]
 print(f"Args: {args}")
 
 # ------------------------- DEFINE GLOBALS ---------------------------
@@ -23,7 +25,12 @@ print(f"Args: {args}")
 def log(text, displayWhenQuiet = False):
     if displayWhenQuiet or not quiet:
         now = datetime.now().strftime("%H:%M:%S")
-        print(f"{now}: {text}")
+        message = f"{now}: {text}"
+        if logFileName is not None:
+            with open(f"/home/pi/Desktop/{logFileName}", "a") as fout:
+                fout.write(f"{message}\n")
+        else:
+            print(message)
 
 # ------------------------- DEFINE INITIALIZE ------------------------
 log("Initializing...", displayWhenQuiet = True)
@@ -32,6 +39,6 @@ log("Initializing...", displayWhenQuiet = True)
 log("Initialized!", displayWhenQuiet = True)
 log("Running...", displayWhenQuiet = True)
 try:
-    print("Run")
+    log("Run")
 except KeyboardInterrupt:
-    print("KeyboardInterrupt caught! Cleaning up...")
+    log("KeyboardInterrupt caught! Cleaning up...")
