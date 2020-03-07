@@ -4,11 +4,17 @@ from datetime import datetime
 from lifxlan import LifxLAN
 from time import sleep
 
+import sys
 import argparse
 try:
     import RPi.GPIO as GPIO
 except RuntimeError:
     print("Error importing RPi.GPIO!  This is probably because you need superuser privileges.  You can achieve this by using 'sudo' to run your script")
+
+def log(text, displayWhenQuiet = False):
+    if displayWhenQuiet or not quiet:
+        now = datetime.now().strftime("%H:%M:%S")
+        print(f"{now}: {text}")
 
 # ------------------------- DEFINE ARGUMENTS -------------------------
 # argParser.add_argument("-a", "--min-area", type=int, default=500, help="Minimum area size before motion detection")
@@ -20,14 +26,20 @@ argParser = argparse.ArgumentParser()
 argParser.add_argument("-p", "--pin-sensor", type=int, default=37, help="Board GPIO pin that sensor is connected to.")
 argParser.add_argument("-o", "--open-time", type=int, default=3000, help="Number of seconds since door open event to ignore lights off.")
 argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
+argParser.add_argument('--debug', dest='debug', action='store_true', help="Disable light actions")
+argParser.add_argument('--file', dest='file', action='store_true', help="Log to file instead of console.")
 
 argParser.set_defaults(quiet=False)
+argParser.set_defaults(debug=False)
+argParser.set_defaults(file=False)
 
 args = vars(argParser.parse_args())
 sensorPin = args["pin_sensor"]
 openTime = args["open_time"]
 quiet = args["quiet"]
-print(f"Args: {args}")
+debug = args["debug"]
+file = args["file"]
+log(f"Args: {args}", displayWhenQuiet=True)
 # ------------------------- DEFINE GLOBALS ---------------------------
 isDoorOpen = False
 lastOpen = None
@@ -44,21 +56,29 @@ officeThree = None
 def log(text, displayWhenQuiet = False):
     if displayWhenQuiet or not quiet:
         now = datetime.now().strftime("%H:%M:%S")
-        print(f"{now}: {text}")
+        message = f"{now}: {text}"
+        if file:
+            with open("/home/pi/Desktop/OfficeSensor/sensor.log", "a") as fout:
+                fout.write(f"{message}\n")
+        else:
+            print(message)
 
 def lightOnSequence():
-    officeOne.set_power("on", duration=5000)
+    if debug: return
+    sleep(0.5)
+    officeOne.set_power("on", duration=5000, rapid=True)
     sleep(1)
-    officeTwo.set_power("on", duration=4000)
+    officeTwo.set_power("on", duration=4000, rapid=True)
     sleep(1)
-    officeThree.set_power("on", duration=3000)
+    officeThree.set_power("on", duration=3000, rapid=True)
 
 def lightOffSequence():
-    officeThree.set_power("off", duration=5000)
+    if debug: return
+    officeThree.set_power("off", duration=5000, rapid=True)
     sleep(1)
-    officeTwo.set_power("off", duration=4000)
+    officeTwo.set_power("off", duration=4000, rapid=True)
     sleep(1)
-    officeOne.set_power("off", duration=3000)
+    officeOne.set_power("off", duration=3000, rapid=True)
 
 def handleOpen():
     log("Open:High")
@@ -136,6 +156,6 @@ try:
             else:
                 handleClose()
 except KeyboardInterrupt:
-    print("KeyboardInterrupt caught! Cleaning up...")
+    log("KeyboardInterrupt caught! Cleaning up...")
     GPIO.cleanup()
-    print("GPIO.cleanup() called!")
+    log("GPIO.cleanup() called!")
