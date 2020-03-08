@@ -1,6 +1,6 @@
 # ------------------------- DEFINE IMPORTS ---------------------------
 from __future__ import print_function
-from datetime import datetime
+from datetime import datetime, time
 from lifxlan import LifxLAN
 from time import sleep
 
@@ -24,7 +24,7 @@ def log(text, displayWhenQuiet = False):
 
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-p", "--pin-sensor", type=int, default=37, help="Board GPIO pin that sensor is connected to.")
-argParser.add_argument("-o", "--open-time", type=int, default=3000, help="Number of seconds since door open event to ignore lights off.")
+argParser.add_argument("-o", "--open-time", type=int, default=30, help="Number of seconds since door open event to ignore lights off.")
 argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
 argParser.add_argument('--debug', dest='debug', action='store_true', help="Disable light actions")
 argParser.add_argument('--file', dest='file', action='store_true', help="Log to file instead of console.")
@@ -63,8 +63,17 @@ def log(text, displayWhenQuiet = False):
         else:
             print(message)
 
+def brightnessByPercent(percent):
+    return 65535 * percent
+
 def lightOnSequence():
     if debug: return
+
+    if datetime.now().time() <= time(20, 0, 0, 0):
+        officeLightGroup.set_brightness(brightnessByPercent(1), rapid=True)
+    else:
+        officeLightGroup.set_brightness(brightnessByPercent(0.25), rapid=True)
+
     sleep(0.5)
     officeOne.set_power("on", duration=5000, rapid=True)
     sleep(1)

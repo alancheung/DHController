@@ -1,4 +1,5 @@
 from lifxlan import LifxLAN
+from datetime import datetime, time
 from time import sleep
 import sys
 
@@ -8,6 +9,21 @@ officeLights = officeLightGroup.get_device_list()
 officeOne = next(filter(lambda l: l.get_label() == "Office One", officeLights), None)
 officeTwo = next(filter(lambda l: l.get_label() == "Office Two", officeLights), None)
 officeThree = next(filter(lambda l: l.get_label() == "Office Three", officeLights), None)
+
+print(datetime.now().time())
+if datetime.now().time() <= time(16, 33, 0, 0):
+    print("Yes")
+else:
+    print("No")
+
+
+
+
+
+
+
+
+
 
 def lightOnSequence():
     print("One on!")
