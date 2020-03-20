@@ -25,6 +25,7 @@ def log(text, displayWhenQuiet = False):
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-p", "--pin-sensor", type=int, default=37, help="Board GPIO pin that sensor is connected to.")
 argParser.add_argument("-o", "--open-time", type=int, default=30, help="Number of seconds since door open event to ignore lights off.")
+argParser.add_argument("-i", "--ignore-time", type=int, default=7, help="Number of seconds to ignore since last input event.")
 argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
 argParser.add_argument('--debug', dest='debug', action='store_true', help="Disable light actions")
 argParser.add_argument('--file', dest='file', action='store_true', help="Log to file instead of console.")
@@ -36,6 +37,7 @@ argParser.set_defaults(file=False)
 args = vars(argParser.parse_args())
 sensorPin = args["pin_sensor"]
 openTime = args["open_time"]
+ignoreTime = args["ignore_time"]
 quiet = args["quiet"]
 debug = args["debug"]
 file = args["file"]
@@ -100,8 +102,11 @@ def handleOpen():
         log("OPEN event received, but no corresponding CLOSE event!", True)
     else:
         timeSinceClose = now - lastClosed
-        log(f"{timeSinceClose.seconds}s has passed from last door close. Turn on lights!", True)
-        lightOnSequence()
+        if timeSinceClose.seconds > ignoreTime:
+            log(f"{timeSinceClose.seconds}s has passed from last door close. Turn on lights!", True)
+            lightOnSequence()
+        else:
+            log(f"Not enough time ({timeSinceClose.seconds}s) has passed to take action on open event.", True)
 
 
 def handleClose():
@@ -115,15 +120,13 @@ def handleClose():
         log("CLOSE event received, but no corresponding OPEN event!", True)
     else:
         timeSinceOpen = now - lastOpen
+        # No need to check ignore time since openTime >= ignoreTime
         if timeSinceOpen.seconds > openTime: 
             # Some time has passed since the door opened, turn off lights
             log(f"{timeSinceOpen.seconds}s has passed from last door open. Turn off lights!", True)
             lightOffSequence()
         else:
-            log(f"Not enough time ({timeSinceOpen.seconds}s) has passed to take action.", True)
-
-    # record last off event
-    
+            log(f"Not enough time ({timeSinceOpen.seconds}s) has passed to take action on close event.", True)
 
 # ------------------------- DEFINE INITIALIZE ------------------------
 log("Initializing...", displayWhenQuiet = True)
@@ -146,10 +149,14 @@ GPIO.setup(sensorPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 isDoorOpen = GPIO.input(sensorPin)
 if isDoorOpen:
     lastOpen = datetime.now()
-    log("Door initialized as OPEN!")
+    log("Door initialized as OPEN!", displayWhenQuiet = True)
 else:
     lastClosed = datetime.now()
-    log("Door initialized as CLOSED!")
+    log("Door initialized as CLOSED!", displayWhenQuiet = True)
+
+# Make sure time makes sense
+if ignoreTime > openTime: 
+    openTime = ignoreTime
 
 # ------------------------- DEFINE RUN -------------------------------
 log("Initialized!", displayWhenQuiet = True)
