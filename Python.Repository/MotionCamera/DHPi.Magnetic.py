@@ -110,10 +110,10 @@ def handleOpen():
     else:
         timeSinceClose = now - lastClosed
         if timeSinceClose.seconds > ignoreTime:
-            log(f"{timeSinceClose.seconds}s has passed from last door close. Turn on lights!", True)
+            log("Turn on lights!", True)
             lightOnSequence()
         else:
-            log(f"Not enough time ({timeSinceClose.seconds}s) has passed to take action on open event.", True)
+            log(f"Not enough time ({timeSinceClose.seconds}s) has passed to take action on OPEN event.", True)
 
 
 def handleClose():
@@ -130,10 +130,10 @@ def handleClose():
         # No need to check ignore time since openTime >= ignoreTime
         if timeSinceOpen.seconds > openTime: 
             # Some time has passed since the door opened, turn off lights
-            log(f"{timeSinceOpen.seconds}s has passed from last door open. Turn off lights!", True)
+            log("Turn off lights!", True)
             lightOffSequence()
         else:
-            log(f"Not enough time ({timeSinceOpen.seconds}s) has passed to take action on close event.", True)
+            log(f"Not enough time ({timeSinceOpen.seconds}s) has passed to take action on CLOSE event.", True)
 
 # ------------------------- DEFINE INITIALIZE ------------------------
 log("Initializing...", displayWhenQuiet = True)
