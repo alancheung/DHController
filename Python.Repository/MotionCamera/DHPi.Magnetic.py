@@ -71,25 +71,32 @@ def brightnessByPercent(percent):
 def lightOnSequence():
     if debug: return
 
-    if datetime.now().time() <= time(20, 0, 0, 0):
-        officeLightGroup.set_brightness(brightnessByPercent(1), rapid=True)
-    else:
-        officeLightGroup.set_brightness(brightnessByPercent(0.25), rapid=True)
+    try:
+        if datetime.now().time() <= time(20, 0, 0, 0):
+            officeLightGroup.set_brightness(brightnessByPercent(1))
+        else:
+            officeLightGroup.set_brightness(brightnessByPercent(0.25))
 
-    sleep(0.5)
-    officeOne.set_power("on", duration=5000, rapid=True)
-    sleep(1)
-    officeTwo.set_power("on", duration=4000, rapid=True)
-    sleep(1)
-    officeThree.set_power("on", duration=3000, rapid=True)
+        sleep(0.5)
+        officeOne.set_power("on", duration=5000)
+        sleep(1)
+        officeTwo.set_power("on", duration=4000)
+        sleep(1)
+        officeThree.set_power("on", duration=3000)
+    except WorkflowException:
+        log("Exception occurred during light on command!", True)
 
 def lightOffSequence():
     if debug: return
-    officeThree.set_power("off", duration=5000, rapid=True)
-    sleep(1)
-    officeTwo.set_power("off", duration=4000, rapid=True)
-    sleep(1)
-    officeOne.set_power("off", duration=3000, rapid=True)
+
+    try:
+        officeThree.set_power("off", duration=5000)
+        sleep(1)
+        officeTwo.set_power("off", duration=4000)
+        sleep(1)
+        officeOne.set_power("off", duration=3000)
+    except WorkflowException:
+        log("Exception occurred during light on command!", True)
 
 def handleOpen():
     log("Open:High")
@@ -136,7 +143,7 @@ officeLightGroup = lifx.get_devices_by_group("Office")
 officeLights = officeLightGroup.get_device_list()
 
 if len(officeLights) < 3:
-    log(f"Did not discover all office lights! ({len(officeLights)} of 3)")
+    log(f"Did not discover all office lights! ({len(officeLights)} of 3)", displayWhenQuiet = True)
     sys.exit(-1)
 
 officeOne = next(filter(lambda l: l.get_label() == "Office One", officeLights), None)
@@ -149,10 +156,10 @@ GPIO.setup(sensorPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 isDoorOpen = GPIO.input(sensorPin)
 if isDoorOpen:
     lastOpen = datetime.now()
-    log("Door initialized as OPEN!", displayWhenQuiet = True)
+    log("Door initialized as OPEN!")
 else:
     lastClosed = datetime.now()
-    log("Door initialized as CLOSED!", displayWhenQuiet = True)
+    log("Door initialized as CLOSED!")
 
 # Make sure time makes sense
 if ignoreTime > openTime: 
