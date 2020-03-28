@@ -4,8 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>93e664b9-1f3d-4a5b-92c0-a927527b5608</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>
-    </StartupFile>
+    <StartupFile>TestCode\lifxTester.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -34,6 +33,7 @@
     <Folder Include="WandTracker\WandTracker.Simple\" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Common\timestones.json" />
     <Content Include="Common\__pycache__\ConsoleLogger.cpython-37.pyc" />
     <Content Include="Common\__pycache__\__init__.cpython-37.pyc" />
     <Content Include="WandTracker\digits.png" />
