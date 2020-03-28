@@ -11,49 +11,6 @@ try:
 except RuntimeError:
     print("Error importing RPi.GPIO!  This is probably because you need superuser privileges.  You can achieve this by using 'sudo' to run your script")
 
-def log(text, displayWhenQuiet = False):
-    if displayWhenQuiet or not quiet:
-        now = datetime.now().strftime("%H:%M:%S")
-        print(f"{now}: {text}")
-
-# ------------------------- DEFINE ARGUMENTS -------------------------
-# argParser.add_argument("-a", "--min-area", type=int, default=500, help="Minimum area size before motion detection")
-#argParser.add_argument('--ononly', dest='ononly', action='store_true', help="Disable turning lights off command")
-#argParser.add_argument('--remote', dest='interactive', action='store_false', help="Disable Pi hardware specific functions")
-#argParser.set_defaults(interactive=True)
-
-argParser = argparse.ArgumentParser()
-argParser.add_argument("-p", "--pin-sensor", type=int, default=37, help="Board GPIO pin that sensor is connected to.")
-argParser.add_argument("-o", "--open-time", type=int, default=30, help="Number of seconds since door open event to ignore lights off.")
-argParser.add_argument("-i", "--ignore-time", type=int, default=7, help="Number of seconds to ignore since last input event.")
-argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
-argParser.add_argument('--debug', dest='debug', action='store_true', help="Disable light actions")
-argParser.add_argument('--file', dest='file', action='store_true', help="Log to file instead of console.")
-
-argParser.set_defaults(quiet=False)
-argParser.set_defaults(debug=False)
-argParser.set_defaults(file=False)
-
-args = vars(argParser.parse_args())
-sensorPin = args["pin_sensor"]
-openTime = args["open_time"]
-ignoreTime = args["ignore_time"]
-quiet = args["quiet"]
-debug = args["debug"]
-file = args["file"]
-log(f"Args: {args}", displayWhenQuiet=True)
-# ------------------------- DEFINE GLOBALS ---------------------------
-isDoorOpen = False
-lastOpen = None
-lastClosed = None
-
-lifx = None
-officeLights = None
-officeLightGroup = None
-officeOne = None
-officeTwo = None
-officeThree = None
-
 # ------------------------- DEFINE FUNCTIONS -------------------------
 def log(text, displayWhenQuiet = False):
     if displayWhenQuiet or not quiet:
@@ -83,7 +40,7 @@ def lightOnSequence():
         officeTwo.set_power("on", duration=4000)
         sleep(1)
         officeThree.set_power("on", duration=3000)
-    except WorkflowException:
+    except:
         log("Exception occurred during light on command!", True)
 
 def lightOffSequence():
@@ -95,7 +52,7 @@ def lightOffSequence():
         officeTwo.set_power("off", duration=4000)
         sleep(1)
         officeOne.set_power("off", duration=3000)
-    except WorkflowException:
+    except:
         log("Exception occurred during light on command!", True)
 
 def handleOpen():
@@ -105,16 +62,8 @@ def handleOpen():
     global lastOpen
     lastOpen = now
 
-    if lastClosed is None:
-        log("OPEN event received, but no corresponding CLOSE event!", True)
-    else:
-        timeSinceClose = now - lastClosed
-        if timeSinceClose.seconds > ignoreTime:
-            log("Turn on lights!", True)
-            lightOnSequence()
-        else:
-            log(f"Not enough time ({timeSinceClose.seconds}s) has passed to take action on OPEN event.", True)
-
+    log("Turn on lights!", True)
+    lightOnSequence()
 
 def handleClose():
     log("Closed:Low")
@@ -123,32 +72,70 @@ def handleClose():
     global lastClosed
     lastClosed = now
 
-    if lastOpen is None:
-        log("CLOSE event received, but no corresponding OPEN event!", True)
+    timeSinceOpen = now - lastOpen
+    if timeSinceOpen.seconds > openTime: 
+        # Some time has passed since the door opened, turn off lights
+        log("Turn off lights!", True)
+        lightOffSequence()
     else:
-        timeSinceOpen = now - lastOpen
-        # No need to check ignore time since openTime >= ignoreTime
-        if timeSinceOpen.seconds > openTime: 
-            # Some time has passed since the door opened, turn off lights
-            log("Turn off lights!", True)
-            lightOffSequence()
-        else:
-            log(f"Not enough time ({timeSinceOpen.seconds}s) has passed to take action on CLOSE event.", True)
+        log(f"Not enough time ({timeSinceOpen.seconds}s) has passed to take action on CLOSE event.", True)
+
+# ------------------------- DEFINE ARGUMENTS -------------------------
+# argParser.add_argument("-a", "--min-area", type=int, default=500, help="Minimum area size before motion detection")
+#argParser.add_argument('--ononly', dest='ononly', action='store_true', help="Disable turning lights off command")
+#argParser.add_argument('--remote', dest='interactive', action='store_false', help="Disable Pi hardware specific functions")
+#argParser.set_defaults(interactive=True)
+
+argParser = argparse.ArgumentParser()
+argParser.add_argument("-p", "--pin-sensor", type=int, default=37, help="Board GPIO pin that sensor is connected to.")
+argParser.add_argument("-o", "--open-time", type=int, default=15, help="Number of seconds since door open event to ignore lights off.")
+argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
+argParser.add_argument('--debug', dest='debug', action='store_true', help="Disable light actions")
+argParser.add_argument('--file', dest='file', action='store_true', help="Log to file instead of console.")
+
+argParser.set_defaults(quiet=False)
+argParser.set_defaults(debug=False)
+argParser.set_defaults(file=False)
+
+args = vars(argParser.parse_args())
+sensorPin = args["pin_sensor"]
+openTime = args["open_time"]
+quiet = args["quiet"]
+debug = args["debug"]
+file = args["file"]
+log(f"Args: {args}", displayWhenQuiet=True)
+
+# ------------------------- DEFINE GLOBALS ---------------------------
+isDoorOpen = False
+lastOpen = None
+lastClosed = None
+
+lifx = None
+officeLights = None
+officeLightGroup = None
+officeOne = None
+officeTwo = None
+officeThree = None
 
 # ------------------------- DEFINE INITIALIZE ------------------------
 log("Initializing...", displayWhenQuiet = True)
-
 lifx = LifxLAN(7)
 officeLightGroup = lifx.get_devices_by_group("Office")
 officeLights = officeLightGroup.get_device_list()
+officeOne = lifx.get_devices_by_name("Office One")
+officeTwo = lifx.get_devices_by_name("Office Two")
+officeThree = lifx.get_devices_by_name("Office Three")
 
-if len(officeLights) < 3:
+if len(officeLights) < 3 or officeOne == None or officeTwo == None or officeThree == None :
     log(f"Did not discover all office lights! ({len(officeLights)} of 3)", displayWhenQuiet = True)
+    devices = lifx.get_lights()
+    print("\nFound {} light(s):\n".format(len(devices)))
+    for d in devices:
+        try:
+        	print(d)
+        except:
+            pass
     sys.exit(-1)
-
-officeOne = next(filter(lambda l: l.get_label() == "Office One", officeLights), None)
-officeTwo = next(filter(lambda l: l.get_label() == "Office Two", officeLights), None)
-officeThree = next(filter(lambda l: l.get_label() == "Office Three", officeLights), None)
 
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(sensorPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
@@ -161,9 +148,6 @@ else:
     lastClosed = datetime.now()
     log("Door initialized as CLOSED!")
 
-# Make sure time makes sense
-if ignoreTime > openTime: 
-    openTime = ignoreTime
 
 # ------------------------- DEFINE RUN -------------------------------
 log("Initialized!", displayWhenQuiet = True)
