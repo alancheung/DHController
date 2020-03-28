@@ -117,6 +117,9 @@ officeOne = None
 officeTwo = None
 officeThree = None
 
+WARM_WHITE = [58112, 0, 65535, 2500]
+DAYLIGHT = [58112, 0, 65535, 5500]
+
 # ------------------------- DEFINE INITIALIZE ------------------------
 log("Initializing...", displayWhenQuiet = True)
 lifx = LifxLAN(7)
