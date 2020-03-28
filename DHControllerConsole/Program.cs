@@ -17,10 +17,10 @@ namespace DHControllerConsole
     {
         public static void Main(string[] args)
         {
-            Console.ReadLine();
-            MonitorHelper.TurnOff();
-            Console.ReadKey();
-            MonitorHelper.TurnOn();
+            //Console.ReadLine();
+            //MonitorHelper.TurnOff();
+            //Console.ReadKey();
+            //MonitorHelper.TurnOn();
 
 
 
