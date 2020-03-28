@@ -49,11 +49,6 @@ if len(officeLights) < 3:
             pass
     sys.exit(-1)
 
-with open("./timestones.json") as file:
-    dictionary = json.load(file)
-
-print(dictionary)
-
 def is_between_time(time, time_range):
     if time_range[1] < time_range[0]:
         return time >= time_range[0] or time <= time_range[1]
@@ -62,8 +57,22 @@ def is_between_time(time, time_range):
 def convert_time(timestring):
     return datetime.strptime(timestring, "%H:%M").time()
 
-s = convert_time(dictionary["work_morning_start"])
-e = convert_time(dictionary["work_morning_end"])
+timestones = None
+try:
+    with open("./timestones.json") as file:
+        timestones = json.load(file)
+    work_morning_start = convert_time(timestones["work_morning_start"])
+    work_morning_end = convert_time(timestones["work_morning_end"])
+    afternoon_dimmer = convert_time(timestones["afternoon_dimmer"])
+except FileNotFoundError:
+    err("timestones.json could not be found!")
+finally:
+    file.close()
+
+print(timestones)
+
+s = convert_time(timestones["work_morning_start"])
+e = convert_time(timestones["work_morning_end"])
 m = time(8, 44, 0, 0, datetime.now().tzinfo)
 
-lightOnSequence(m, s, e)
+#lightOnSequence(m, s, e)

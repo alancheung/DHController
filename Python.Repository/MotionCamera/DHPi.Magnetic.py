@@ -3,6 +3,7 @@ from __future__ import print_function
 from datetime import datetime, time
 from lifxlan import LifxLAN
 from time import sleep
+import json
 
 import sys
 import argparse
@@ -141,13 +142,15 @@ log("Initializing...", displayWhenQuiet = True)
 log(f"Args: {args}", displayWhenQuiet=True)
 lifx = LifxLAN(7)
 officeLightGroup = lifx.get_devices_by_group("Office")
-officeLights = officeLightGroup.get_device_list()
 officeOne = lifx.get_devices_by_name("Office One")
+log(f"officeOne({officeOne is not None}) initialized!")
 officeTwo = lifx.get_devices_by_name("Office Two")
+log(f"officeTwo({officeTwo is not None}) initialized!")
 officeThree = lifx.get_devices_by_name("Office Three")
+log(f"officeThree({officeThree is not None}) initialized!")
 
-if len(officeLights) < 3 or officeOne == None or officeTwo == None or officeThree == None :
-    log(f"Did not discover all office lights! ({len(officeLights)} of 3)", displayWhenQuiet = True)
+if officeOne == None or officeTwo == None or officeThree == None:
+    log(f"Did not discover all office lights! OfficeOne({officeOne is not None}), OfficeTwo({officeTwo is not None}), OfficeThree({officeThree is not None})", displayWhenQuiet = True)
     devices = lifx.get_lights()
     print("\nFound {} light(s):\n".format(len(devices)))
     for d in devices:
@@ -158,18 +161,22 @@ if len(officeLights) < 3 or officeOne == None or officeTwo == None or officeThre
     sys.exit(-1)
 
 try:
-    with open("./timestones.json") as file:
-        timestones = json.load(file)
-    work_morning_start = convert_time(timestones["work_morning_start"])
-    work_morning_end = convert_time(timestones["work_morning_end"])
-    afternoon_dimmer = convert_time(timestones["afternoon_dimmer"])
+    with open("/home/pi/Desktop/OfficeSensor/timestones.json") as timestoneFile:
+        timestones = json.load(timestoneFile)
+        log("File loaded!")
 except FileNotFoundError:
-    err("timestones.json could not be found!")
-finally:
-    file.close()
+    err("'/home/pi/Desktop/OfficeSensor/timestones.json' could not be found!")
+    sys.exit(-1)
+log(f"Timestones: {timestones}", displayWhenQuiet=True)
+
+work_morning_start = convert_time(timestones["work_morning_start"])
+work_morning_end = convert_time(timestones["work_morning_end"])
+afternoon_dimmer = convert_time(timestones["afternoon_dimmer"])
+log("timestones converted!")
 
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(sensorPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+log("GPIO initialized!")
 
 isDoorOpen = GPIO.input(sensorPin)
 if isDoorOpen:
