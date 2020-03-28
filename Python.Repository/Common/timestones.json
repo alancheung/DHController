@@ -1,4 +1,5 @@
 {
   "work_morning_start": "05:00",
-  "work_morning_end": "08:45"
+  "work_morning_end": "08:45",
+  "afternoon_dimmer": "08:00"
 }

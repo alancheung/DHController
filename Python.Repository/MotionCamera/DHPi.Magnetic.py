@@ -36,6 +36,9 @@ debug = args["debug"]
 file = args["file"]
 
 # ------------------------- DEFINE GLOBALS ---------------------------
+WARM_WHITE = [58112, 0, 65535, 2500]
+DAYLIGHT = [58112, 0, 65535, 5500]
+
 isDoorOpen = False
 lastOpen = None
 lastClosed = None
@@ -47,8 +50,10 @@ officeOne = None
 officeTwo = None
 officeThree = None
 
-WARM_WHITE = [58112, 0, 65535, 2500]
-DAYLIGHT = [58112, 0, 65535, 5500]
+timestones = None
+work_morning_start = None
+work_morning_end = None
+afternoon_dimmer = None
 
 # ------------------------- DEFINE FUNCTIONS -------------------------
 def log(text, displayWhenQuiet = False):
@@ -61,38 +66,50 @@ def log(text, displayWhenQuiet = False):
         else:
             print(message)
 
+def err(text):
+    log(text, True)
+
+def is_between_time(time, time_range):
+    if time_range[1] < time_range[0]:
+        return time >= time_range[0] or time <= time_range[1]
+    return time_range[0] <= time <= time_range[1]
+
+def convert_time(timestring):
+    return datetime.strptime(timestring, "%H:%M").time()
+
 def brightnessByPercent(percent):
     return 65535 * percent
 
 def lightOnSequence():
     if debug: return
 
-    try:
-        if datetime.now().time() <= time(20, 0, 0, 0):
-            officeLightGroup.set_brightness(brightnessByPercent(1))
-        else:
-            officeLightGroup.set_brightness(brightnessByPercent(0.25))
+    now = datetime.now()
 
-        sleep(0.5)
-        officeOne.set_power("on", duration=5000)
-        sleep(1)
-        officeTwo.set_power("on", duration=4000)
-        sleep(1)
-        officeThree.set_power("on", duration=3000)
-    except:
-        log("Exception occurred during light on command!", True)
+    # Determine brightness by configurable time
+    # TODO make dynamic from sunset.
+    if now.time() <= afternoon_dimmer:
+        officeLightGroup.set_brightness(brightnessByPercent(1), rapid = True)
+    else:
+        officeLightGroup.set_brightness(brightnessByPercent(0.25), rapid = True)
+
+    # If we're in the office for work then set correct color
+    # Weekday Monday(0) - Sunday(6)
+    if now.weekday() < 5 and is_between_time(now.time(), (work_morning_start, work_morning_end)):
+        officeLightGroup.set_color(DAYLIGHT, rapid = True)
+    else:
+        officeLightGroup.set_color(WARM_WHITE, rapid = True)
+
+    sleep(0.5)
+    officeOne.set_power("on", duration=5000, rapid = True)
+    sleep(1)
+    officeTwo.set_power("on", duration=4000, rapid = True)
+    sleep(1)
+    officeThree.set_power("on", duration=3000, rapid = True)
 
 def lightOffSequence():
     if debug: return
 
-    try:
-        officeThree.set_power("off", duration=5000)
-        sleep(1)
-        officeTwo.set_power("off", duration=4000)
-        sleep(1)
-        officeOne.set_power("off", duration=3000)
-    except:
-        log("Exception occurred during light on command!", True)
+    officeLightGroup.set_power("off", rapid = True)
 
 def handleOpen():
     log("Open:High")
@@ -140,6 +157,17 @@ if len(officeLights) < 3 or officeOne == None or officeTwo == None or officeThre
             pass
     sys.exit(-1)
 
+try:
+    with open("./timestones.json") as file:
+        timestones = json.load(file)
+    work_morning_start = convert_time(timestones["work_morning_start"])
+    work_morning_end = convert_time(timestones["work_morning_end"])
+    afternoon_dimmer = convert_time(timestones["afternoon_dimmer"])
+except FileNotFoundError:
+    err("timestones.json could not be found!")
+finally:
+    file.close()
+
 GPIO.setmode(GPIO.BOARD)
 GPIO.setup(sensorPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
@@ -150,7 +178,6 @@ if isDoorOpen:
 else:
     lastClosed = datetime.now()
     log("Door initialized as CLOSED!")
-
 
 # ------------------------- DEFINE RUN -------------------------------
 log("Initialized!", displayWhenQuiet = True)

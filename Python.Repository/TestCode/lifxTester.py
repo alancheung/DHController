@@ -2,25 +2,35 @@ from lifxlan import LifxLAN
 from datetime import datetime, time
 from time import sleep
 import sys
+import json
 
-print(datetime.now().time())
-if datetime.now().time() <= time(16, 33, 0, 0):
-    print("Yes")
-else:
-    print("No")
+#print(datetime.now().time())
+#if datetime.now().time() <= time(16, 33, 0, 0):
+#    print("Yes")
+#else:
+#    print("No")
+WARM_WHITE = [58112, 0, 65535, 2500]
+DAYLIGHT = [58112, 0, 65535, 5500]
 
-def lightOnSequence():
-    print("One on!")
-    officeOne.set_power("on", duration=5000)
-    sleep(1)
-    print("Two on!")
-    officeTwo.set_power("on", duration=4000)
-    sleep(1)
-    print("Three on!")
-    officeThree.set_power("on", duration=3000)
-    sleep(1)
+def lightOnSequence(now, s, e):
+    if is_between_time(now, (s, e)):
+            officeLightGroup.set_color(DAYLIGHT, rapid = True)
+    else:
+        officeLightGroup.set_color(WARM_WHITE, rapid = True)
 
-sleep(1)
+    try:
+        print("One on!")
+        officeOne.set_power("on", duration=5000)
+        sleep(1)
+        print("Two on!")
+        officeTwo.set_power("on", duration=4000)
+        sleep(1)
+        print("Three on!")
+        officeThree.set_power("on", duration=3000)
+        sleep(1)
+    except:
+        print("Exception ocurred.")
+
 lifx = LifxLAN(7)
 officeLightGroup = lifx.get_devices_by_group("Office")
 officeLights = officeLightGroup.get_device_list()
@@ -30,8 +40,6 @@ officeThree = lifx.get_devices_by_name("Office Three")
 
 if len(officeLights) < 3:
     print(f"Did not discover all office lights! ({len(officeLights)} of 3)")
-    sys.exit(-1)
-else:
     devices = lifx.get_lights()
     print("\nFound {} light(s):\n".format(len(devices)))
     for d in devices:
@@ -39,4 +47,23 @@ else:
         	print(d)
         except:
             pass
+    sys.exit(-1)
 
+with open("./timestones.json") as file:
+    dictionary = json.load(file)
+
+print(dictionary)
+
+def is_between_time(time, time_range):
+    if time_range[1] < time_range[0]:
+        return time >= time_range[0] or time <= time_range[1]
+    return time_range[0] <= time <= time_range[1]
+
+def convert_time(timestring):
+    return datetime.strptime(timestring, "%H:%M").time()
+
+s = convert_time(dictionary["work_morning_start"])
+e = convert_time(dictionary["work_morning_end"])
+m = time(8, 44, 0, 0, datetime.now().tzinfo)
+
+lightOnSequence(m, s, e)
