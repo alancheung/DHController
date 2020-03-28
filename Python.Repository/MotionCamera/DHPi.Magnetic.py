@@ -11,6 +11,45 @@ try:
 except RuntimeError:
     print("Error importing RPi.GPIO!  This is probably because you need superuser privileges.  You can achieve this by using 'sudo' to run your script")
 
+# ------------------------- DEFINE ARGUMENTS -------------------------
+# argParser.add_argument("-a", "--min-area", type=int, default=500, help="Minimum area size before motion detection")
+#argParser.add_argument('--ononly', dest='ononly', action='store_true', help="Disable turning lights off command")
+#argParser.add_argument('--remote', dest='interactive', action='store_false', help="Disable Pi hardware specific functions")
+#argParser.set_defaults(interactive=True)
+
+argParser = argparse.ArgumentParser()
+argParser.add_argument("-p", "--pin-sensor", type=int, default=37, help="Board GPIO pin that sensor is connected to.")
+argParser.add_argument("-o", "--open-time", type=int, default=15, help="Number of seconds since door open event to ignore lights off.")
+argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
+argParser.add_argument('--debug', dest='debug', action='store_true', help="Disable light actions")
+argParser.add_argument('--file', dest='file', action='store_true', help="Log to file instead of console.")
+
+argParser.set_defaults(quiet=False)
+argParser.set_defaults(debug=False)
+argParser.set_defaults(file=False)
+
+args = vars(argParser.parse_args())
+sensorPin = args["pin_sensor"]
+openTime = args["open_time"]
+quiet = args["quiet"]
+debug = args["debug"]
+file = args["file"]
+
+# ------------------------- DEFINE GLOBALS ---------------------------
+isDoorOpen = False
+lastOpen = None
+lastClosed = None
+
+lifx = None
+officeLights = None
+officeLightGroup = None
+officeOne = None
+officeTwo = None
+officeThree = None
+
+WARM_WHITE = [58112, 0, 65535, 2500]
+DAYLIGHT = [58112, 0, 65535, 5500]
+
 # ------------------------- DEFINE FUNCTIONS -------------------------
 def log(text, displayWhenQuiet = False):
     if displayWhenQuiet or not quiet:
@@ -80,48 +119,9 @@ def handleClose():
     else:
         log(f"Not enough time ({timeSinceOpen.seconds}s) has passed to take action on CLOSE event.", True)
 
-# ------------------------- DEFINE ARGUMENTS -------------------------
-# argParser.add_argument("-a", "--min-area", type=int, default=500, help="Minimum area size before motion detection")
-#argParser.add_argument('--ononly', dest='ononly', action='store_true', help="Disable turning lights off command")
-#argParser.add_argument('--remote', dest='interactive', action='store_false', help="Disable Pi hardware specific functions")
-#argParser.set_defaults(interactive=True)
-
-argParser = argparse.ArgumentParser()
-argParser.add_argument("-p", "--pin-sensor", type=int, default=37, help="Board GPIO pin that sensor is connected to.")
-argParser.add_argument("-o", "--open-time", type=int, default=15, help="Number of seconds since door open event to ignore lights off.")
-argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
-argParser.add_argument('--debug', dest='debug', action='store_true', help="Disable light actions")
-argParser.add_argument('--file', dest='file', action='store_true', help="Log to file instead of console.")
-
-argParser.set_defaults(quiet=False)
-argParser.set_defaults(debug=False)
-argParser.set_defaults(file=False)
-
-args = vars(argParser.parse_args())
-sensorPin = args["pin_sensor"]
-openTime = args["open_time"]
-quiet = args["quiet"]
-debug = args["debug"]
-file = args["file"]
-log(f"Args: {args}", displayWhenQuiet=True)
-
-# ------------------------- DEFINE GLOBALS ---------------------------
-isDoorOpen = False
-lastOpen = None
-lastClosed = None
-
-lifx = None
-officeLights = None
-officeLightGroup = None
-officeOne = None
-officeTwo = None
-officeThree = None
-
-WARM_WHITE = [58112, 0, 65535, 2500]
-DAYLIGHT = [58112, 0, 65535, 5500]
-
 # ------------------------- DEFINE INITIALIZE ------------------------
 log("Initializing...", displayWhenQuiet = True)
+log(f"Args: {args}", displayWhenQuiet=True)
 lifx = LifxLAN(7)
 officeLightGroup = lifx.get_devices_by_group("Office")
 officeLights = officeLightGroup.get_device_list()
