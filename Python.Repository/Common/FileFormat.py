@@ -3,6 +3,17 @@ from __future__ import print_function
 from datetime import datetime
 import argparse
 
+# ------------------------- DEFINE FUNCTIONS -------------------------
+def log(text, displayWhenQuiet = False):
+    if displayWhenQuiet or not quiet:
+        now = datetime.now().strftime("%H:%M:%S")
+        message = f"{now}: {text}"
+        if logFileName is not None:
+            with open(f"/home/pi/Desktop/{logFileName}", "a") as fout:
+                fout.write(f"{message}\n")
+        else:
+            print(message)
+
 # ------------------------- DEFINE ARGUMENTS -------------------------
 # argParser.add_argument("-a", "--min-area", type=int, default=500, help="Minimum area size before motion detection")
 #argParser.add_argument('--ononly', dest='ononly', action='store_true', help="Disable turning lights off command")
@@ -21,16 +32,6 @@ print(f"Args: {args}")
 
 # ------------------------- DEFINE GLOBALS ---------------------------
 
-# ------------------------- DEFINE FUNCTIONS -------------------------
-def log(text, displayWhenQuiet = False):
-    if displayWhenQuiet or not quiet:
-        now = datetime.now().strftime("%H:%M:%S")
-        message = f"{now}: {text}"
-        if logFileName is not None:
-            with open(f"/home/pi/Desktop/{logFileName}", "a") as fout:
-                fout.write(f"{message}\n")
-        else:
-            print(message)
 
 # ------------------------- DEFINE INITIALIZE ------------------------
 log("Initializing...", displayWhenQuiet = True)
