@@ -82,7 +82,7 @@ def brightnessByPercent(percent):
 def DAYLIGHT(brightness):
     return [58112, 0, brightness, 5500]
 
-def DAYLIGHT(brightness):
+def WARM_WHITE(brightness):
     return [58112, 0, brightness, 2500]
 
 def lightOnSequence():
@@ -209,6 +209,10 @@ try:
             else:
                 handleClose()
 except KeyboardInterrupt:
-    log("KeyboardInterrupt caught! Cleaning up...")
+    err("KeyboardInterrupt caught!")
+except:
+    err("Unhandled exception caught!")
+finally:
+    err("Cleaning up...")
     GPIO.cleanup()
-    log("GPIO.cleanup() called!")
+    err("GPIO.cleanup() called!")
