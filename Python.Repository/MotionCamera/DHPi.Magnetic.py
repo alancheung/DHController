@@ -112,6 +112,10 @@ def lightOffSequence():
 
     officeLightGroup.set_power("off", rapid = True)
 
+    # Make sure lights are off
+    sleep(0.5)
+    officeLightGroup.set_power("off", rapid = True)
+
 def handleOpen():
     log("Open:High")
     now = datetime.now()
