@@ -37,8 +37,6 @@ debug = args["debug"]
 file = args["file"]
 
 # ------------------------- DEFINE GLOBALS ---------------------------
-WARM_WHITE = [58112, 0, 65535, 2500]
-DAYLIGHT = [58112, 0, 65535, 5500]
 
 isDoorOpen = False
 lastOpen = None
@@ -81,6 +79,12 @@ def convert_time(timestring):
 def brightnessByPercent(percent):
     return 65535 * percent
 
+def DAYLIGHT(brightness):
+    return [58112, 0, brightness, 5500]
+
+def DAYLIGHT(brightness):
+    return [58112, 0, brightness, 2500]
+
 def lightOnSequence():
     if debug: return
 
@@ -88,17 +92,18 @@ def lightOnSequence():
 
     # Determine brightness by configurable time
     # TODO make dynamic from sunset.
+    brightness = None
     if now.time() <= afternoon_dimmer:
-        officeLightGroup.set_brightness(brightnessByPercent(1), rapid = True)
+        brightness = brightnessByPercent(1)
     else:
-        officeLightGroup.set_brightness(brightnessByPercent(0.25), rapid = True)
+        brightness = brightnessByPercent(0.25)
 
     # If we're in the office for work then set correct color
     # Weekday Monday(0) - Sunday(6)
     if now.weekday() < 5 and is_between_time(now.time(), (work_morning_start, work_morning_end)):
-        officeLightGroup.set_color(DAYLIGHT, rapid = True)
+        officeLightGroup.set_color(DAYLIGHT(brightness), rapid = True)
     else:
-        officeLightGroup.set_color(WARM_WHITE, rapid = True)
+        officeLightGroup.set_color(WARM_WHITE(brightness), rapid = True)
 
     sleep(0.5)
     officeOne.set_power("on", duration=5000, rapid = True)
