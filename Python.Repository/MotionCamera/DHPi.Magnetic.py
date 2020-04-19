@@ -21,6 +21,7 @@ except RuntimeError:
 argParser = argparse.ArgumentParser()
 argParser.add_argument("-p", "--pin-sensor", type=int, default=37, help="Board GPIO pin that sensor is connected to.")
 argParser.add_argument("-o", "--open-time", type=int, default=15, help="Number of seconds since door open event to ignore lights off.")
+argParser.add_argument("-r", "--reset-time", type=int, default=3, help="Workaround for intermittent sensor disconnects. Number of seconds to ignore close event.")
 argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
 argParser.add_argument('--debug', dest='debug', action='store_true', help="Disable light actions")
 argParser.add_argument('--file', dest='file', action='store_true', help="Log to file instead of console.")
@@ -31,6 +32,7 @@ argParser.set_defaults(file=False)
 
 args = vars(argParser.parse_args())
 sensorPin = args["pin_sensor"]
+resetTime = args["reset_time"]
 openTime = args["open_time"]
 quiet = args["quiet"]
 debug = args["debug"]
@@ -118,6 +120,17 @@ def lightOnSequence():
 
 def lightOffSequence():
     if debug: return
+
+    # listen for awhile to determine if this is a freak disconnect
+    ignore = False
+    start = datetime.now()
+    while (datetime.now() - start).seconds < resetTime or ignore is False:
+        isDoorOpen = GPIO.input(sensorPin)
+        ignore = ignore or isDoorOpen
+
+    if ignore:
+        log("Ignoring close event because of sensor reset!", True)
+        return
 
     officeLightGroup.set_power("off", rapid = True)
 
