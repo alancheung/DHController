@@ -50,8 +50,8 @@ officeTwo = None
 officeThree = None
 
 timestones = None
-work_morning_start = None
-work_morning_end = None
+work_start = None
+work_end = None
 afternoon_dimmer = None
 
 # ------------------------- DEFINE FUNCTIONS -------------------------
@@ -100,7 +100,7 @@ def lightOnSequence():
 
     # If we're in the office for work then set correct color
     # Weekday Monday(0) - Sunday(6)
-    if now.weekday() < 5 and is_between_time(now.time(), (work_morning_start, work_morning_end)):
+    if now.weekday() < 5 and is_between_time(now.time(), (work_start, work_end)):
         officeLightGroup.set_color(DAYLIGHT(brightness), rapid = True)
         sleep(0.5)
         # Leave OfficeOne off because Kelly.
@@ -182,8 +182,8 @@ except FileNotFoundError:
     sys.exit(-1)
 log(f"Timestones: {timestones}", displayWhenQuiet=True)
 
-work_morning_start = convert_time(timestones["work_morning_start"])
-work_morning_end = convert_time(timestones["work_morning_end"])
+work_start = convert_time(timestones["work_start"])
+work_end = convert_time(timestones["work_end"])
 afternoon_dimmer = convert_time(timestones["afternoon_dimmer"])
 log("timestones converted!")
 
