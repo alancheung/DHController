@@ -1,5 +1,4 @@
 from collections import deque
-import ConsoleLogger
 import numpy as np
 import cv2
 import imutils
