@@ -121,17 +121,6 @@ def lightOnSequence():
 def lightOffSequence():
     if debug: return
 
-    # listen for awhile to determine if this is a freak disconnect
-    ignore = False
-    start = datetime.now()
-    while (datetime.now() - start).seconds < resetTime or ignore is False:
-        isDoorOpen = GPIO.input(sensorPin)
-        ignore = ignore or isDoorOpen
-
-    if ignore:
-        log("Ignoring close event because of sensor reset!", True)
-        return
-
     officeLightGroup.set_power("off", rapid = True)
 
     # Make sure lights are off
@@ -157,6 +146,17 @@ def handleClose():
 
     timeSinceOpen = now - lastOpen
     if timeSinceOpen.seconds > openTime: 
+        # listen for awhile to determine if this is a freak disconnect
+        ignore = False
+        start = datetime.now()
+        while (datetime.now() - start).seconds < resetTime or ignore is False:
+            isDoorOpen = GPIO.input(sensorPin)
+            ignore = ignore or isDoorOpen
+
+        if ignore:
+            log("Ignoring close event because of sensor reset!", True)
+            return
+
         # Some time has passed since the door opened, turn off lights
         log("Turn off lights!", True)
         lightOffSequence()
