@@ -96,21 +96,25 @@ def lightOnSequence():
     if now.time() <= afternoon_dimmer:
         brightness = brightnessByPercent(1)
     else:
-        brightness = brightnessByPercent(0.25)
+        brightness = brightnessByPercent(0.45)
 
     # If we're in the office for work then set correct color
     # Weekday Monday(0) - Sunday(6)
     if now.weekday() < 5 and is_between_time(now.time(), (work_morning_start, work_morning_end)):
         officeLightGroup.set_color(DAYLIGHT(brightness), rapid = True)
+        sleep(0.5)
+        # Leave OfficeOne off because Kelly.
+        officeTwo.set_power("on", duration=4000, rapid = True)
+        sleep(1)
+        officeThree.set_power("on", duration=3000, rapid = True)
     else:
         officeLightGroup.set_color(WARM_WHITE(brightness), rapid = True)
-
-    sleep(0.5)
-    officeOne.set_power("on", duration=5000, rapid = True)
-    sleep(1)
-    officeTwo.set_power("on", duration=4000, rapid = True)
-    sleep(1)
-    officeThree.set_power("on", duration=3000, rapid = True)
+        sleep(0.5)
+        officeOne.set_power("on", duration=5000, rapid = True)
+        sleep(1)
+        officeTwo.set_power("on", duration=4000, rapid = True)
+        sleep(1)
+        officeThree.set_power("on", duration=3000, rapid = True)
 
 def lightOffSequence():
     if debug: return
