@@ -123,6 +123,9 @@
     <Compile Include="TestCode\MagneticSensor\magneticSensor.py">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="TestCode\timefunctions.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="WandTracker\classificationTutorial.py" />
     <Compile Include="WandTracker\common.py" />
     <Compile Include="WandTracker\digitTrainedTest.py" />
