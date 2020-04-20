@@ -154,7 +154,7 @@ def handleClose():
             ignore = ignore or isDoorOpen
 
         if ignore:
-            log("Ignoring close event because of sensor reset!", True)
+            log(f"Ignoring close event because of sensor reset in {datetime.now() - start).seconds}s!", True)
             return
 
         # Some time has passed since the door opened, turn off lights
