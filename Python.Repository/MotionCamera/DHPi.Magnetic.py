@@ -264,7 +264,7 @@ try:
                 # listen for awhile to determine if this is a freak disconnect
                 ignore = False
                 start = datetime.now()
-                while (datetime.now() - start).seconds < resetTime or ignore == False:
+                while (datetime.now() - start).seconds < resetTime and ignore == False:
                     isDoorOpen = GPIO.input(sensorPin)
                     ignore = isDoorOpen
 
