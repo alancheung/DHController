@@ -94,6 +94,9 @@ def WARM_WHITE(brightness):
 def sync(force = False, lastDoorState = None):
     global lastSyncTime
     if force == False and (datetime.now() - lastSyncTime).seconds < syncTime: return
+    if debug == True:
+        lastSyncTime = datetime.now()
+        return
 
     global officeOne
     global officeTwo
@@ -211,7 +214,7 @@ log(f"Args: {args}", displayWhenQuiet=True)
 lifx = LifxLAN(7)
 sync(True)
 
-if officeOne == None or officeTwo == None or officeThree == None:
+if debug == False and (officeOne == None or officeTwo == None or officeThree == None):
     log(f"Did not discover all office lights! OfficeOne({officeOne is not None}), OfficeTwo({officeTwo is not None}), OfficeThree({officeThree is not None})", displayWhenQuiet = True)
     devices = lifx.get_lights()
     print("\nFound {} light(s):\n".format(len(devices)))
@@ -269,7 +272,7 @@ try:
                     ignore = isDoorOpen
 
                 # done listening, should I turn off lights?
-                if ignore:
+                if ignore == True:
                     log(f"Ignoring close event because of sensor reset in {(datetime.now() - start).seconds}s!", True)
                 else:
                     handleClose()
