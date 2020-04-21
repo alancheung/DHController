@@ -22,6 +22,7 @@ argParser = argparse.ArgumentParser()
 argParser.add_argument("-p", "--pin-sensor", type=int, default=37, help="Board GPIO pin that sensor is connected to.")
 argParser.add_argument("-o", "--open-time", type=int, default=15, help="Number of seconds since door open event to ignore lights off.")
 argParser.add_argument("-r", "--reset-time", type=int, default=3, help="Workaround for intermittent sensor disconnects. Number of seconds to ignore close event.")
+argParser.add_argument("-l", "--light-sync-time", type=int, default=300, help="Workaround for intermittent light disconnects. Number of seconds before syncing with lights again.")
 argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
 argParser.add_argument('--debug', dest='debug', action='store_true', help="Disable light actions")
 argParser.add_argument('--file', dest='file', action='store_true', help="Log to file instead of console.")
@@ -33,6 +34,7 @@ argParser.set_defaults(file=False)
 args = vars(argParser.parse_args())
 sensorPin = args["pin_sensor"]
 resetTime = args["reset_time"]
+syncTime = args["light_sync_time"]
 openTime = args["open_time"]
 quiet = args["quiet"]
 debug = args["debug"]
@@ -56,10 +58,12 @@ work_start = None
 work_end = None
 afternoon_dimmer = None
 
+lastSyncTime = datetime.now()
+
 # ------------------------- DEFINE FUNCTIONS -------------------------
 def log(text, displayWhenQuiet = False):
     if displayWhenQuiet or not quiet:
-        now = datetime.now().strftime("%H:%M:%S")
+        now = datetime.now().strftime("%x %X")
         message = f"{now}: {text}"
         if file:
             with open("/home/pi/Desktop/OfficeSensor/sensor.log", "a") as fout:
@@ -87,6 +91,31 @@ def DAYLIGHT(brightness):
 def WARM_WHITE(brightness):
     return [58112, 0, brightness, 2500]
 
+def sync(force = False):
+    global lastSyncTime
+    if force is False and (datetime.now() - lastSyncTime).seconds < syncTime: return
+
+    global officeOne
+    global officeTwo
+    global officeThree
+    global officeLightGroup
+    officeLightGroup = lifx.get_devices_by_group("Office")
+    
+    officeOne = None
+    officeOne = lifx.get_devices_by_name("Office One")
+    log(f"officeOne({officeOne is not None}) synced!")
+
+    officeTwo = None
+    officeTwo = lifx.get_devices_by_name("Office Two")
+    log(f"officeTwo({officeTwo is not None}) synced!")
+
+    officeThree = None
+    officeThree = lifx.get_devices_by_name("Office Three")
+    log(f"officeThree({officeThree is not None}) synced!")
+
+    log(f"Light Status [officeOne({officeOne is not None}) :: officeTwo({officeTwo is not None}) :: officeThree({officeThree is not None})]")
+    lastSyncTime = datetime.now()
+
 def lightOnSequence():
     if debug: return
 
@@ -109,6 +138,7 @@ def lightOnSequence():
         officeTwo.set_power("on", duration=4000, rapid = True)
         sleep(1)
         officeThree.set_power("on", duration=3000, rapid = True)
+        log(f"Lights [Brightness:{brightness}, Color:DAYLIGHT]", True)
     else:
         officeLightGroup.set_color(WARM_WHITE(brightness), rapid = True)
         sleep(0.5)
@@ -117,6 +147,7 @@ def lightOnSequence():
         officeTwo.set_power("on", duration=4000, rapid = True)
         sleep(1)
         officeThree.set_power("on", duration=3000, rapid = True)
+        log(f"Lights [Brightness:{brightness}, Color:WARM_WHITE]", True)
 
 def lightOffSequence():
     if debug: return
@@ -144,6 +175,9 @@ def handleClose():
     global lastClosed
     lastClosed = now
 
+    # still read global state, so it doesn't jump to on when it turns on
+    global isDoorOpen
+
     timeSinceOpen = now - lastOpen
     if timeSinceOpen.seconds > openTime: 
         # listen for awhile to determine if this is a freak disconnect
@@ -154,7 +188,7 @@ def handleClose():
             ignore = ignore or isDoorOpen
 
         if ignore:
-            log(f"Ignoring close event because of sensor reset in {datetime.now() - start).seconds}s!", True)
+            log(f"Ignoring close event because of sensor reset in {(datetime.now() - start).seconds}s!", True)
             return
 
         # Some time has passed since the door opened, turn off lights
@@ -167,13 +201,7 @@ def handleClose():
 log("Initializing...", displayWhenQuiet = True)
 log(f"Args: {args}", displayWhenQuiet=True)
 lifx = LifxLAN(7)
-officeLightGroup = lifx.get_devices_by_group("Office")
-officeOne = lifx.get_devices_by_name("Office One")
-log(f"officeOne({officeOne is not None}) initialized!")
-officeTwo = lifx.get_devices_by_name("Office Two")
-log(f"officeTwo({officeTwo is not None}) initialized!")
-officeThree = lifx.get_devices_by_name("Office Three")
-log(f"officeThree({officeThree is not None}) initialized!")
+sync(True)
 
 if officeOne == None or officeTwo == None or officeThree == None:
     log(f"Did not discover all office lights! OfficeOne({officeOne is not None}), OfficeTwo({officeTwo is not None}), OfficeThree({officeThree is not None})", displayWhenQuiet = True)
@@ -217,6 +245,7 @@ log("Initialized!", displayWhenQuiet = True)
 log("Running...", displayWhenQuiet = True)
 try:
     while True:
+        sync()
         lastState = isDoorOpen
         isDoorOpen = GPIO.input(sensorPin)
 
