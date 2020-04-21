@@ -45,6 +45,7 @@ file = args["file"]
 isDoorOpen = False
 lastOpen = None
 lastClosed = None
+lastSyncTime = None
 
 lifx = None
 officeLights = None
@@ -58,7 +59,6 @@ work_start = None
 work_end = None
 afternoon_dimmer = None
 
-lastSyncTime = datetime.now()
 
 # ------------------------- DEFINE FUNCTIONS -------------------------
 def log(text, displayWhenQuiet = False):
@@ -91,30 +91,52 @@ def DAYLIGHT(brightness):
 def WARM_WHITE(brightness):
     return [58112, 0, brightness, 2500]
 
-def sync(force = False):
+def sync(force = False, lastDoorState = None):
     global lastSyncTime
-    if force is False and (datetime.now() - lastSyncTime).seconds < syncTime: return
+    if force == False and (datetime.now() - lastSyncTime).seconds < syncTime: return
 
     global officeOne
     global officeTwo
     global officeThree
     global officeLightGroup
     officeLightGroup = lifx.get_devices_by_group("Office")
+    if (shouldInterruptSync(lastDoorState)):
+        log("Sync interrupted!", True)
+        return
     
     officeOne = None
     officeOne = lifx.get_devices_by_name("Office One")
     log(f"officeOne({officeOne is not None}) synced!")
+    if (shouldInterruptSync(lastDoorState)):
+        log("Sync interrupted!", True)
+        return
 
     officeTwo = None
     officeTwo = lifx.get_devices_by_name("Office Two")
     log(f"officeTwo({officeTwo is not None}) synced!")
+    if (shouldInterruptSync(lastDoorState)):
+        log("Sync interrupted!", True)
+        return
 
     officeThree = None
     officeThree = lifx.get_devices_by_name("Office Three")
     log(f"officeThree({officeThree is not None}) synced!")
-
-    log(f"Light Status [officeOne({officeOne is not None}) :: officeTwo({officeTwo is not None}) :: officeThree({officeThree is not None})]")
+    log(f"Sync Status ({doorStateText(lastDoorState)}) - [officeOne({officeOne is not None}) :: officeTwo({officeTwo is not None}) :: officeThree({officeThree is not None})]")
     lastSyncTime = datetime.now()
+
+def shouldInterruptSync(lastDoorState):
+    # Interrupt sync if the door was closed and we just opened it.
+    if lastDoorState is not None and lastDoorState == False:
+        return GPIO.input(sensorPin) == True
+
+def doorStateText(isDoorOpen):
+    if isDoorOpen == True:
+        return "OPEN";
+    elif isDoorOpen == False:
+        return "CLOSED";
+    else:
+        return "UNKNOWN";
+
 
 def lightOnSequence():
     if debug: return
@@ -132,31 +154,31 @@ def lightOnSequence():
     # If we're in the office for work then set correct color
     # Weekday Monday(0) - Sunday(6)
     if now.weekday() < 5 and is_between_time(now.time(), (work_start, work_end)):
-        officeLightGroup.set_color(DAYLIGHT(brightness), rapid = True)
+        officeLightGroup.set_color(DAYLIGHT(brightness))
         sleep(0.5)
         # Leave OfficeOne off because Kelly.
-        officeTwo.set_power("on", duration=4000, rapid = True)
+        officeTwo.set_power("on", duration=4000)
         sleep(1)
-        officeThree.set_power("on", duration=3000, rapid = True)
-        log(f"Lights [Brightness:{brightness}, Color:DAYLIGHT]", True)
+        officeThree.set_power("on", duration=3000)
+        log(f"Lights - [Brightness:{brightness}, Color:DAYLIGHT]", True)
     else:
-        officeLightGroup.set_color(WARM_WHITE(brightness), rapid = True)
+        officeLightGroup.set_color(WARM_WHITE(brightness))
         sleep(0.5)
-        officeOne.set_power("on", duration=5000, rapid = True)
+        officeOne.set_power("on", duration=5000)
         sleep(1)
-        officeTwo.set_power("on", duration=4000, rapid = True)
+        officeTwo.set_power("on", duration=4000)
         sleep(1)
-        officeThree.set_power("on", duration=3000, rapid = True)
-        log(f"Lights [Brightness:{brightness}, Color:WARM_WHITE]", True)
+        officeThree.set_power("on", duration=3000)
+        log(f"Lights - [Brightness:{brightness}, Color:WARM_WHITE]", True)
 
 def lightOffSequence():
     if debug: return
 
-    officeLightGroup.set_power("off", rapid = True)
+    officeLightGroup.set_power("off")
 
     # Make sure lights are off
     sleep(0.5)
-    officeLightGroup.set_power("off", rapid = True)
+    officeLightGroup.set_power("off")
 
 def handleOpen():
     log("Open:High")
@@ -175,22 +197,8 @@ def handleClose():
     global lastClosed
     lastClosed = now
 
-    # still read global state, so it doesn't jump to on when it turns on
-    global isDoorOpen
-
     timeSinceOpen = now - lastOpen
-    if timeSinceOpen.seconds > openTime: 
-        # listen for awhile to determine if this is a freak disconnect
-        ignore = False
-        start = datetime.now()
-        while (datetime.now() - start).seconds < resetTime or ignore is False:
-            isDoorOpen = GPIO.input(sensorPin)
-            ignore = ignore or isDoorOpen
-
-        if ignore:
-            log(f"Ignoring close event because of sensor reset in {(datetime.now() - start).seconds}s!", True)
-            return
-
+    if timeSinceOpen.seconds > openTime:
         # Some time has passed since the door opened, turn off lights
         log("Turn off lights!", True)
         lightOffSequence()
@@ -245,15 +253,26 @@ log("Initialized!", displayWhenQuiet = True)
 log("Running...", displayWhenQuiet = True)
 try:
     while True:
-        sync()
         lastState = isDoorOpen
+        sync(lastDoorState = lastState)
         isDoorOpen = GPIO.input(sensorPin)
 
         if lastState != isDoorOpen:
             if(isDoorOpen):
                 handleOpen()
             else:
-                handleClose()
+                # listen for awhile to determine if this is a freak disconnect
+                ignore = False
+                start = datetime.now()
+                while (datetime.now() - start).seconds < resetTime or ignore == False:
+                    isDoorOpen = GPIO.input(sensorPin)
+                    ignore = isDoorOpen
+
+                # done listening, should I turn off lights?
+                if ignore:
+                    log(f"Ignoring close event because of sensor reset in {(datetime.now() - start).seconds}s!", True)
+                else:
+                    handleClose()
 except KeyboardInterrupt:
     err("KeyboardInterrupt caught!")
 except:
