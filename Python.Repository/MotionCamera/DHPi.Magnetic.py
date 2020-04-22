@@ -1,6 +1,6 @@
 # ------------------------- DEFINE IMPORTS ---------------------------
 from __future__ import print_function
-from datetime import datetime, time
+from datetime import datetime, time, timedelta
 from lifxlan import LifxLAN
 from time import sleep
 import json
@@ -22,7 +22,7 @@ argParser = argparse.ArgumentParser()
 argParser.add_argument("-p", "--pin-sensor", type=int, default=37, help="Board GPIO pin that sensor is connected to.")
 argParser.add_argument("-o", "--open-time", type=int, default=15, help="Number of seconds since door open event to ignore lights off.")
 argParser.add_argument("-r", "--reset-time", type=int, default=3, help="Workaround for intermittent sensor disconnects. Number of seconds to ignore close event.")
-argParser.add_argument("-l", "--light-sync-time", type=int, default=300, help="Workaround for intermittent light disconnects. Number of seconds before syncing with lights again.")
+argParser.add_argument("-l", "--light-sync-time", type=int, default=900, help="Workaround for intermittent light disconnects. Number of seconds before syncing with lights again.")
 argParser.add_argument('--quiet', dest='quiet', action='store_true', help="Disable logging")
 argParser.add_argument('--debug', dest='debug', action='store_true', help="Disable light actions")
 argParser.add_argument('--file', dest='file', action='store_true', help="Log to file instead of console.")
@@ -59,6 +59,7 @@ work_start = None
 work_end = None
 afternoon_dimmer = None
 
+lastSyncFailed = False
 
 # ------------------------- DEFINE FUNCTIONS -------------------------
 def log(text, displayWhenQuiet = False):
@@ -95,21 +96,27 @@ def powerStateString(device):
     if device is None:
         return "UNKNOWN"
 
-    powerLevel = device.get_power()
+    powerLevel = device.power_level
     if powerLevel == 0:
         return "OFF"
     else:
         return "ON"
 
 def sync(force = False, lastDoorState = None):
+    global lastSyncFailed
     global lastSyncTime
-    if force == False and (datetime.now() - lastSyncTime).seconds < syncTime: return
+
+    if force == False: 
+        # Shorter reset when last failed
+        if lastSyncFailed == True and (datetime.now() - lastSyncTime).seconds < (syncTime / 5): return
+        elif lastSyncFailed == False and (datetime.now() - lastSyncTime).seconds < syncTime: return 
     if debug == True:
         lastSyncTime = datetime.now()
         return
 
     log("Starting sync...")
     try:
+        global lifx
         global officeOne
         global officeTwo
         global officeThree
@@ -119,28 +126,35 @@ def sync(force = False, lastDoorState = None):
             log("Sync interrupted!", True)
             return
     
-        officeOne = lifx.get_device_by_name("Office One")
-        log(f"officeOne({powerStateString(officeOne)}) synced!")
-        if (shouldInterruptSync(lastDoorState)):
-            log("Sync interrupted!", True)
-            return
+        # "If the last sync didn't fail or the sync did fail and this light failed, then update"
+        if lastSyncFailed == False or powerStateString(officeOne) != "ON":
+            officeOne = lifx.get_device_by_name("Office One")
+            log(f"officeOne({powerStateString(officeOne)}) synced!")
+            if (shouldInterruptSync(lastDoorState)):
+                log("Sync interrupted!", True)
+                return
 
-        officeTwo = lifx.get_device_by_name("Office Two")
-        log(f"officeTwo({powerStateString(officeTwo)}) synced!")
-        if (shouldInterruptSync(lastDoorState)):
-            log("Sync interrupted!", True)
-            return
+        if lastSyncFailed == False or powerStateString(officeTwo) != "ON":
+            officeTwo = lifx.get_device_by_name("Office Two")
+            log(f"officeTwo({powerStateString(officeTwo)}) synced!")
+            if (shouldInterruptSync(lastDoorState)):
+                log("Sync interrupted!", True)
+                return
 
-        officeThree = lifx.get_device_by_name("Office Three")
-        log(f"officeThree({powerStateString(officeOne)}) synced!")
+        if lastSyncFailed == False or powerStateString(officeThree) != "ON":
+            officeThree = lifx.get_device_by_name("Office Three")
+            log(f"officeThree({powerStateString(officeThree)}) synced!")
 
         log(f"Sync Status ({doorStateText(lastDoorState)}) - [officeOne({powerStateString(officeOne)}) :: officeTwo({powerStateString(officeTwo)}) :: officeThree({powerStateString(officeThree)})]", True)
         if powerStateString(officeOne) != "ON" or powerStateString(officeTwo) != "ON" or powerStateString(officeThree) != "ON":
             raise ConnectionError("One or more lights were not connected!")
 
+        lastSyncFailed = False
         lastSyncTime = datetime.now()
-    except:
-        err(f'Sync failed! Last successful sync at {lastSyncTime.strftime("%X")}!')
+    except Exception as ex:
+        err(f'Sync failed ({type(ex).__name__})! Last successful sync at {lastSyncTime.strftime("%X")}!')
+        lastSyncFailed = True
+        lastSyncTime = datetime.now()
 
 def shouldInterruptSync(lastDoorState):
     # Interrupt sync if the door was closed and we just opened it.
@@ -238,7 +252,6 @@ if debug == False and (officeOne == None or officeTwo == None or officeThree == 
         	print(d)
         except:
             pass
-    sys.exit(-1)
 
 try:
     with open("/home/pi/Desktop/OfficeSensor/timestones.json") as timestoneFile:
