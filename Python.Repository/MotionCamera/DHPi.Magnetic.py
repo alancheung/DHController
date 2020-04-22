@@ -127,26 +127,26 @@ def sync(force = False, lastDoorState = None):
             return
     
         # "If the last sync didn't fail or the sync did fail and this light failed, then update"
-        if lastSyncFailed == False or powerStateString(officeOne) != "ON":
+        if lastSyncFailed == False or powerStateString(officeOne) == "UNKNOWN":
             officeOne = lifx.get_device_by_name("Office One")
             log(f"officeOne({powerStateString(officeOne)}) synced!")
             if (shouldInterruptSync(lastDoorState)):
                 log("Sync interrupted!", True)
                 return
 
-        if lastSyncFailed == False or powerStateString(officeTwo) != "ON":
+        if lastSyncFailed == False or powerStateString(officeTwo) == "UNKNOWN":
             officeTwo = lifx.get_device_by_name("Office Two")
             log(f"officeTwo({powerStateString(officeTwo)}) synced!")
             if (shouldInterruptSync(lastDoorState)):
                 log("Sync interrupted!", True)
                 return
 
-        if lastSyncFailed == False or powerStateString(officeThree) != "ON":
+        if lastSyncFailed == False or powerStateString(officeThree) == "UNKNOWN":
             officeThree = lifx.get_device_by_name("Office Three")
             log(f"officeThree({powerStateString(officeThree)}) synced!")
 
         log(f"Sync Status ({doorStateText(lastDoorState)}) - [officeOne({powerStateString(officeOne)}) :: officeTwo({powerStateString(officeTwo)}) :: officeThree({powerStateString(officeThree)})]", True)
-        if powerStateString(officeOne) != "ON" or powerStateString(officeTwo) != "ON" or powerStateString(officeThree) != "ON":
+        if powerStateString(officeOne) == "UNKNOWN" or powerStateString(officeTwo) == "UNKNOWN" or powerStateString(officeThree) == "UNKNOWN":
             raise ConnectionError("One or more lights were not connected!")
 
         lastSyncFailed = False
@@ -186,31 +186,31 @@ def lightOnSequence():
     # If we're in the office for work then set correct color
     # Weekday Monday(0) - Sunday(6)
     if now.weekday() < 5 and is_between_time(now.time(), (work_start, work_end)):
-        officeLightGroup.set_color(DAYLIGHT(brightness))
+        officeLightGroup.set_color(DAYLIGHT(brightness), rapid = True)
         sleep(0.5)
         # Leave OfficeOne off because Kelly.
-        officeTwo.set_power("on", duration=4000)
+        officeTwo.set_power("on", duration=4000, rapid = True)
         sleep(1)
-        officeThree.set_power("on", duration=3000)
+        officeThree.set_power("on", duration=3000, rapid = True)
         log(f"Lights - [Brightness:{brightness}, Color:DAYLIGHT]", True)
     else:
-        officeLightGroup.set_color(WARM_WHITE(brightness))
+        officeLightGroup.set_color(WARM_WHITE(brightness), rapid = True)
         sleep(0.5)
-        officeOne.set_power("on", duration=5000)
+        officeOne.set_power("on", duration=5000, rapid = True)
         sleep(1)
-        officeTwo.set_power("on", duration=4000)
+        officeTwo.set_power("on", duration=4000, rapid = True)
         sleep(1)
-        officeThree.set_power("on", duration=3000)
+        officeThree.set_power("on", duration=3000, rapid = True)
         log(f"Lights - [Brightness:{brightness}, Color:WARM_WHITE]", True)
 
 def lightOffSequence():
     if debug: return
 
-    officeLightGroup.set_power("off")
+    officeLightGroup.set_power("off", rapid = True)
 
     # Make sure lights are off
     sleep(0.5)
-    officeLightGroup.set_power("off")
+    officeLightGroup.set_power("off", rapid = True)
 
 def handleOpen():
     log("Open:High")
@@ -306,8 +306,8 @@ try:
                     handleClose()
 except KeyboardInterrupt:
     err("KeyboardInterrupt caught!")
-except:
-    err("Unhandled exception caught!")
+except Exception as ex:
+    err("Unhandled exception ({type(ex).__name__}) caught!")
 finally:
     err("Cleaning up...")
     GPIO.cleanup()
