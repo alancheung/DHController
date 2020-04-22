@@ -45,7 +45,7 @@ file = args["file"]
 isDoorOpen = False
 lastOpen = None
 lastClosed = None
-lastSyncTime = None
+lastSyncTime = datetime.now()
 
 lifx = None
 officeLights = None
@@ -91,6 +91,16 @@ def DAYLIGHT(brightness):
 def WARM_WHITE(brightness):
     return [58112, 0, brightness, 2500]
 
+def powerStateString(device):
+    if device is None:
+        return "UNKNOWN"
+
+    powerLevel = device.get_power()
+    if powerLevel == 0:
+        return "OFF"
+    else:
+        return "ON"
+
 def sync(force = False, lastDoorState = None):
     global lastSyncTime
     if force == False and (datetime.now() - lastSyncTime).seconds < syncTime: return
@@ -98,34 +108,39 @@ def sync(force = False, lastDoorState = None):
         lastSyncTime = datetime.now()
         return
 
-    global officeOne
-    global officeTwo
-    global officeThree
-    global officeLightGroup
-    officeLightGroup = lifx.get_devices_by_group("Office")
-    if (shouldInterruptSync(lastDoorState)):
-        log("Sync interrupted!", True)
-        return
+    log("Starting sync...")
+    try:
+        global officeOne
+        global officeTwo
+        global officeThree
+        global officeLightGroup
+        officeLightGroup = lifx.get_devices_by_group("Office")
+        if (shouldInterruptSync(lastDoorState)):
+            log("Sync interrupted!", True)
+            return
     
-    officeOne = None
-    officeOne = lifx.get_devices_by_name("Office One")
-    log(f"officeOne({officeOne is not None}) synced!")
-    if (shouldInterruptSync(lastDoorState)):
-        log("Sync interrupted!", True)
-        return
+        officeOne = lifx.get_device_by_name("Office One")
+        log(f"officeOne({powerStateString(officeOne)}) synced!")
+        if (shouldInterruptSync(lastDoorState)):
+            log("Sync interrupted!", True)
+            return
 
-    officeTwo = None
-    officeTwo = lifx.get_devices_by_name("Office Two")
-    log(f"officeTwo({officeTwo is not None}) synced!")
-    if (shouldInterruptSync(lastDoorState)):
-        log("Sync interrupted!", True)
-        return
+        officeTwo = lifx.get_device_by_name("Office Two")
+        log(f"officeTwo({powerStateString(officeTwo)}) synced!")
+        if (shouldInterruptSync(lastDoorState)):
+            log("Sync interrupted!", True)
+            return
 
-    officeThree = None
-    officeThree = lifx.get_devices_by_name("Office Three")
-    log(f"officeThree({officeThree is not None}) synced!")
-    log(f"Sync Status ({doorStateText(lastDoorState)}) - [officeOne({officeOne is not None}) :: officeTwo({officeTwo is not None}) :: officeThree({officeThree is not None})]")
-    lastSyncTime = datetime.now()
+        officeThree = lifx.get_device_by_name("Office Three")
+        log(f"officeThree({powerStateString(officeOne)}) synced!")
+
+        log(f"Sync Status ({doorStateText(lastDoorState)}) - [officeOne({powerStateString(officeOne)}) :: officeTwo({powerStateString(officeTwo)}) :: officeThree({powerStateString(officeThree)})]", True)
+        if powerStateString(officeOne) != "ON" or powerStateString(officeTwo) != "ON" or powerStateString(officeThree) != "ON":
+            raise ConnectionError("One or more lights were not connected!")
+
+        lastSyncTime = datetime.now()
+    except:
+        err(f'Sync failed! Last successful sync at {lastSyncTime.strftime("%X")}!')
 
 def shouldInterruptSync(lastDoorState):
     # Interrupt sync if the door was closed and we just opened it.
@@ -267,7 +282,7 @@ try:
                 # listen for awhile to determine if this is a freak disconnect
                 ignore = False
                 start = datetime.now()
-                while (datetime.now() - start).seconds < resetTime and ignore == False:
+                while ignore == False and (datetime.now() - start).seconds < resetTime:
                     isDoorOpen = GPIO.input(sensorPin)
                     ignore = isDoorOpen
 
