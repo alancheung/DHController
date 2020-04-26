@@ -60,6 +60,7 @@ work_end = None
 afternoon_dimmer = None
 
 lastSyncFailed = False
+lastFailedOffTime = None
 
 # ------------------------- DEFINE FUNCTIONS -------------------------
 def log(text, displayWhenQuiet = False):
@@ -205,12 +206,14 @@ def lightOnSequence():
 
 def lightOffSequence():
     if debug: return
+    global lastFailedOffTime
 
-    officeLightGroup.set_power("off", rapid = True)
-
-    # Make sure lights are off
-    sleep(0.5)
-    officeLightGroup.set_power("off", rapid = True)
+    try:
+        officeLightGroup.set_power("off")
+        lastFailedOffTime = None
+    except Exception as ex:
+        err(f"Off Failed : ({type(ex).__name__})")
+        lastFailedOffTime = datetime.now()
 
 def handleOpen():
     log("Open:High")
@@ -304,6 +307,8 @@ try:
                     log(f"Ignoring close event because of sensor reset in {(datetime.now() - start).seconds}s!", True)
                 else:
                     handleClose()
+        elif (lastFailedOffTime != None and (lastFailedOffTime - datetime.now()).seconds < (syncTime / 5)):
+            lightOffSequence()
 except KeyboardInterrupt:
     err("KeyboardInterrupt caught!")
 except Exception as ex:
