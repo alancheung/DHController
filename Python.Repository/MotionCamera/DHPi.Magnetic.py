@@ -303,7 +303,7 @@ try:
                     ignore = isDoorOpen
 
                 # done listening, should I turn off lights?
-                if ignore == True:
+                if ignore == True and ((datetime.now() - start).seconds > 0):
                     log(f"Ignoring close event because of sensor reset in {(datetime.now() - start).seconds}s!", True)
                 else:
                     handleClose()
