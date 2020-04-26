@@ -296,14 +296,14 @@ try:
                 handleOpen()
             else:
                 # listen for awhile to determine if this is a freak disconnect
-                ignore = False
+                freakDisconnect = False
                 start = datetime.now()
-                while ignore == False and (datetime.now() - start).seconds < resetTime:
+                while freakDisconnect == False and (datetime.now() - start).seconds < resetTime:
                     isDoorOpen = GPIO.input(sensorPin)
-                    ignore = isDoorOpen
+                    freakDisconnect = isDoorOpen
 
                 # done listening, should I turn off lights?
-                if ignore == True and ((datetime.now() - start).seconds > 0):
+                if freakDisconnect == True:
                     log(f"Ignoring close event because of sensor reset in {(datetime.now() - start).seconds}s!", True)
                 else:
                     handleClose()
@@ -312,7 +312,7 @@ try:
 except KeyboardInterrupt:
     err("KeyboardInterrupt caught!")
 except Exception as ex:
-    err("Unhandled exception ({type(ex).__name__}) caught!")
+    err(f"Unhandled exception ({type(ex).__name__}) caught!")
 finally:
     err("Cleaning up...")
     GPIO.cleanup()
